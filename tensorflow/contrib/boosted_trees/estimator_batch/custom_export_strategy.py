@@ -207,12 +207,14 @@ def convert_to_universal_format(dtec, sorted_feature_names,
           matching_id = categorical_test.value.add()
           matching_id.int64_value = split.feature_id
           node.custom_left_child_test.Pack(categorical_test)
-        elif (node_type == "oblivious_dense_float_binary_split" or
-              node_type == "oblivious_categorical_id_binary_split"):
+        elif node_type in [
+              "oblivious_dense_float_binary_split",
+              "oblivious_categorical_id_binary_split",
+          ]:
           raise ValueError("Universal tree format doesn't support oblivious "
                            "trees")
         else:
-          raise ValueError("Unexpected node type %s" % node_type)
+          raise ValueError(f"Unexpected node type {node_type}")
         node.left_child_id.value = split.left_id
         node.right_child_id.value = split.right_id
   return model_and_features
@@ -259,7 +261,7 @@ def _get_feature_importances(dtec, feature_names, num_dense_floats,
         assert tree_node.node_metadata.gain == 0
         continue
       else:
-        raise ValueError("Unexpected split type %s" % node_type)
+        raise ValueError(f"Unexpected split type {node_type}")
       # Apply shrinkage factor. It is important since it is not always uniform
       # across different trees.
       sums[split_column] += (

@@ -81,7 +81,7 @@ def create_test_objects(cluster_spec=None,
         cluster_spec=cluster_spec,
         task_type=task_type,
         task_id=task_id)
-    target = 'grpc://' + cluster_spec[task_type][task_id]
+    target = f'grpc://{cluster_spec[task_type][task_id]}'
   else:
     target = ''
 

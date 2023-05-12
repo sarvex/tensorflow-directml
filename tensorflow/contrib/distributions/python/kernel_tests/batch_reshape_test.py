@@ -457,13 +457,7 @@ class _BatchReshapeTest(object):
   def test_non_positive_shape(self):
     dims = 2
     old_batch_shape = [4]
-    if self.is_static_shape:
-      # Unknown first dimension does not trigger size check. Note that
-      # any dimension < 0 is treated statically as unknown.
-      new_batch_shape = [-1, 0]
-    else:
-      new_batch_shape = [-2, -2]  # -2 * -2 = 4, same size as the old shape.
-
+    new_batch_shape = [-1, 0] if self.is_static_shape else [-2, -2]
     new_batch_shape_ph = (
         constant_op.constant(np.int32(new_batch_shape)) if self.is_static_shape
         else array_ops.placeholder_with_default(

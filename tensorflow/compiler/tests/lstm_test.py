@@ -39,7 +39,7 @@ from tensorflow.python.platform import test
 
 def _DumpGraph(graph, basename):
   if FLAGS.dump_graph_dir:
-    name = os.path.join(FLAGS.dump_graph_dir, basename + '.pbtxt')
+    name = os.path.join(FLAGS.dump_graph_dir, f'{basename}.pbtxt')
     with open(name, 'w') as f:
       f.write(str(graph.as_graph_def()))
 

@@ -40,7 +40,7 @@ def square_cases():
                    [1, 2, 3, 4, 5],
                    [6, 7, 8, 9, 1],
                    [2, 3, 4, 5, 6]]])
-  tests = dict()
+  tests = {}
   # tests[d_lower, d_upper] = (compact_diagonals, padded_diagnals)
   tests[-1, -1] = (np.array([[6, 4, 1, 7],
                              [5, 2, 8, 5]]),
@@ -118,7 +118,7 @@ def tall_cases():
                    [4, 5, 6],
                    [7, 8, 9],
                    [9, 8, 7]]])
-  tests = dict()
+  tests = {}
   # tests[d_lower, d_upper] = (compact_diagonals, padded_diagnals)
   tests[0, 0] = (np.array([[1, 5, 9],
                            [3, 2, 6]]),
@@ -202,7 +202,7 @@ def fat_cases():
                   [[4, 5, 6, 7],
                    [8, 9, 1, 2],
                    [3, 4, 5, 6]]])
-  tests = dict()
+  tests = {}
   # tests[d_lower, d_upper] = (compact_diagonals, padded_diagnals)
   tests[0, 0] = (np.array([[1, 6, 2],
                            [4, 9, 5]]),
@@ -356,10 +356,6 @@ class MatrixDiagTest(xla_test.XLATestCase):
     # LINT.ThenChange(//tensorflow/python/ops/array_ops.py)
       return
 
-    # Stores expected num_rows and num_cols (when the other is given).
-    # expected[(d_lower, d_upper)] = (expected_num_rows, expected_num_cols)
-    test_list = list()
-
     # Square cases:
     expected = {
         (-1, -1): (5, 4),
@@ -367,8 +363,7 @@ class MatrixDiagTest(xla_test.XLATestCase):
         (-2, 1): (5, 5),
         (2, 4): (3, 5),
     }
-    test_list.append((expected, square_cases()))
-
+    test_list = [(expected, square_cases())]
     # Tall cases
     expected = {
         (0, 0): (3, 3),
@@ -477,8 +472,6 @@ class MatrixSetDiagTest(xla_test.XLATestCase):
   # Generic tests applicable to both v1 and v2 ops.
   # Originally from binary_ops_tests.py.
   def testV1(self):
-    test_cases = list()
-
     # pyformat: disable
     # pylint: disable=bad-whitespace
     # Square cases.
@@ -489,8 +482,7 @@ class MatrixSetDiagTest(xla_test.XLATestCase):
     solution = np.array([[1, 1, 0],
                          [1, 2, 1],
                          [1, 1, 3]])
-    test_cases.append(({"input": input, "diagonal": diag}, solution))
-
+    test_cases = [({"input": input, "diagonal": diag}, solution)]
     input = np.array([[[1, 0, 3],
                        [0, 2, 0],
                        [1, 0, 3]],

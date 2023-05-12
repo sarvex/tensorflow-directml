@@ -91,9 +91,7 @@ class NumpyState(base.Trackable):
   def __getattribute__(self, name):
     """Un-wrap `_NumpyWrapper` objects when accessing attributes."""
     value = super(NumpyState, self).__getattribute__(name)
-    if isinstance(value, _NumpyWrapper):
-      return value.array
-    return value
+    return value.array if isinstance(value, _NumpyWrapper) else value
 
   def __setattr__(self, name, value):
     """Automatically wrap NumPy arrays assigned to attributes."""

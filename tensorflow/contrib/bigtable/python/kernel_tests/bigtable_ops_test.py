@@ -240,7 +240,7 @@ class BigtableOpsTest(test.TestCase):
       sess.run(itr.initializer)
       expected_values = list(zip(self.COMMON_ROW_KEYS, self.COMMON_VALUES))
       actual_values = []
-      for _ in range(len(expected_values)):
+      for _ in expected_values:
         output = sess.run(n)
         actual_values.append(output)
       with self.assertRaises(errors.OutOfRangeError):
@@ -258,7 +258,7 @@ class BigtableOpsTest(test.TestCase):
       sess.run(itr.initializer)
       expected_values = list(zip(self.COMMON_ROW_KEYS, self.COMMON_VALUES))
       actual_values = []
-      for _ in range(len(expected_values)):
+      for _ in expected_values:
         output = sess.run(n)
         actual_values.append(output)
       with self.assertRaises(errors.OutOfRangeError):

@@ -226,8 +226,8 @@ class QuantileAccumulator(tracking.TrackableResource):
 
   def flush_summary(self, stamp_token, next_stamp_token):
     """Finalizes quantile summary stream and resets it for next iteration."""
-    result = gen_quantile_ops.quantile_accumulator_flush_summary(
+    return gen_quantile_ops.quantile_accumulator_flush_summary(
         quantile_accumulator_handle=self.resource_handle,
         stamp_token=stamp_token,
-        next_stamp_token=next_stamp_token)
-    return result
+        next_stamp_token=next_stamp_token,
+    )

@@ -104,14 +104,15 @@ def _make_predictions_dict(stamp,
   Returns:
     A dict of predictions.
   """
-  result = {}
-  result[ENSEMBLE_STAMP] = stamp
-  result[PREDICTIONS] = logits
-  result[PARTITION_IDS] = partition_ids
-  result[NUM_LAYERS_ATTEMPTED] = ensemble_stats.attempted_layers
-  result[NUM_TREES_ATTEMPTED] = ensemble_stats.attempted_trees
-  result[NUM_USED_HANDLERS] = used_handlers.num_used_handlers
-  result[USED_HANDLERS_MASK] = used_handlers.used_handlers_mask
+  result = {
+      ENSEMBLE_STAMP: stamp,
+      PREDICTIONS: logits,
+      PARTITION_IDS: partition_ids,
+      NUM_LAYERS_ATTEMPTED: ensemble_stats.attempted_layers,
+      NUM_TREES_ATTEMPTED: ensemble_stats.attempted_trees,
+      NUM_USED_HANDLERS: used_handlers.num_used_handlers,
+      USED_HANDLERS_MASK: used_handlers.used_handlers_mask,
+  }
   if leaf_index is not None:
     result[LEAF_INDEX] = leaf_index
   return result
@@ -152,7 +153,7 @@ class _OpRoundRobinStrategy(object):
       ValueError: If attempting to place non-PS Op.
     """
     if op.type not in self._next_task_per_op:
-      raise ValueError("Unknown op type '%s' for placement:" % op.type)
+      raise ValueError(f"Unknown op type '{op.type}' for placement:")
     task = self._next_task_per_op[op.type]
     self._next_task_per_op[op.type] = ((task + 1) % self._num_tasks
                                        if self._num_tasks else 0)
@@ -250,21 +251,22 @@ def extract_features(features, feature_columns, use_core_columns):
         sparse_int_values.append(tensor.values)
         sparse_int_shapes.append(tensor.dense_shape)
       else:
-        raise ValueError("Unsupported sparse feature %s with dtype %s." %
-                         (tensor.indices.name, tensor.dtype))
-    else:
-      if tensor.dtype == dtypes.float32:
-        if len(tensor.shape) > 1 and tensor.shape[1] > 1:
-          unstacked = array_ops.unstack(tensor, axis=1)
-          for i in range(len(unstacked)):
-            dense_float_names.append(_FEATURE_NAME_TEMPLATE % (key, i))
-            dense_floats.append(array_ops.reshape(unstacked[i], [-1, 1]))
-        else:
-          dense_float_names.append(key)
-          dense_floats.append(tensor)
+        raise ValueError(
+            f"Unsupported sparse feature {tensor.indices.name} with dtype {tensor.dtype}."
+        )
+    elif tensor.dtype == dtypes.float32:
+      if len(tensor.shape) > 1 and tensor.shape[1] > 1:
+        unstacked = array_ops.unstack(tensor, axis=1)
+        for i in range(len(unstacked)):
+          dense_float_names.append(_FEATURE_NAME_TEMPLATE % (key, i))
+          dense_floats.append(array_ops.reshape(unstacked[i], [-1, 1]))
       else:
-        raise ValueError("Unsupported dense feature %s with dtype %s." %
-                         (tensor.name, tensor.dtype))
+        dense_float_names.append(key)
+        dense_floats.append(tensor)
+    else:
+      raise ValueError(
+          f"Unsupported dense feature {tensor.name} with dtype {tensor.dtype}."
+      )
   # Feature columns are logically organized into incrementing slots starting
   # from dense floats, then sparse floats then sparse ints.
   fc_names = (dense_float_names + sparse_float_names + sparse_int_names)
@@ -355,13 +357,13 @@ class GradientBoostedDecisionTreeModel(object):
     self._examples_per_layer = examples_per_layer
 
     # Check loss reduction value.
-    if (loss_reduction != losses.Reduction.SUM and
-        loss_reduction != losses.Reduction.SUM_OVER_NONZERO_WEIGHTS):
-      raise ValueError(
-          "Invalid loss reduction is provided: %s." % loss_reduction)
+    if loss_reduction not in [
+        losses.Reduction.SUM,
+        losses.Reduction.SUM_OVER_NONZERO_WEIGHTS,
+    ]:
+      raise ValueError(f"Invalid loss reduction is provided: {loss_reduction}.")
     self._loss_reduction = loss_reduction
 
-    # Fill in the defaults.
     if (learner_config.multi_class_strategy ==
         learner_pb2.LearnerConfig.MULTI_CLASS_STRATEGY_UNSPECIFIED):
       if logits_dimension == 1:
@@ -439,8 +441,8 @@ class GradientBoostedDecisionTreeModel(object):
       raise ValueError("Oblivious trees don't handle sparse float features yet."
                       )
 
-    logging.info("Active Feature Columns: " + str(fc_names))
-    logging.info("Learner config: " + str(learner_config))
+    logging.info(f"Active Feature Columns: {str(fc_names)}")
+    logging.info(f"Learner config: {str(learner_config)}")
     self._fc_names = fc_names
     self._dense_floats = dense_floats
     self._sparse_float_indices = sparse_float_indices
@@ -456,9 +458,9 @@ class GradientBoostedDecisionTreeModel(object):
 
     if output_leaf_index_modes is None:
       output_leaf_index_modes = [learn.ModeKeys.INFER]
-    elif not all(
-        mode in (learn.ModeKeys.TRAIN, learn.ModeKeys.EVAL,
-                 learn.ModeKeys.INFER) for mode in output_leaf_index_modes):
+    elif any(mode not in (learn.ModeKeys.TRAIN, learn.ModeKeys.EVAL,
+                          learn.ModeKeys.INFER)
+             for mode in output_leaf_index_modes):
       raise ValueError("output_leaf_index_modes should only contain ModeKeys.")
 
     self._output_leaf_index = output_leaf_index
@@ -574,7 +576,7 @@ class GradientBoostedDecisionTreeModel(object):
       with ops.name_scope("local_ensemble", "TreeEnsembleVariable"):
         local_ensemble_handle = (
             gen_model_ops.decision_tree_ensemble_resource_handle_op(
-                self._ensemble_handle.op.name + "/local_ensemble"))
+                f"{self._ensemble_handle.op.name}/local_ensemble"))
         create_op = gen_model_ops.create_tree_ensemble_variable(
             local_ensemble_handle, stamp_token=-1, tree_ensemble_config="")
         with ops.control_dependencies([create_op]):

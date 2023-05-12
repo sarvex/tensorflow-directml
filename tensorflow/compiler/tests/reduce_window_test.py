@@ -41,8 +41,7 @@ class ReduceWindowTest(xla_test.XLATestCase):
   def testReduceWindow(self):
 
     # TODO(b/77644762): float16 and float64 ReduceWindow are unimplemented.
-    for dtype in set(self.numeric_types).intersection(
-        set([dtypes.bfloat16.as_numpy_dtype, np.float32])):
+    for dtype in set(self.numeric_types).intersection({dtypes.bfloat16.as_numpy_dtype, np.float32}):
 
       @function.Defun(dtype, dtype)
       def sum_reducer(x, y):

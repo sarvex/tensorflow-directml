@@ -98,9 +98,7 @@ class _ModelFnWrapper(object):
       outputs = compile(eval_step)
       loss = outputs[0]
 
-      # Calculate eval_metric_ops if eval_metric_fn is set and captured.
-      eval_metric_fn = captured_eval_metric_fn.get()
-      if eval_metric_fn:
+      if eval_metric_fn := captured_eval_metric_fn.get():
         eval_metric_fn_tensors = outputs[1:]
         eval_metric_ops = eval_metric_fn(*eval_metric_fn_tensors)
       else:

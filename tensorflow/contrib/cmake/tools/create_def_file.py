@@ -93,8 +93,7 @@ def get_args():
   parser.add_argument("--output", help="output deffile", required=True)
   parser.add_argument("--target", help="name of the target", required=True)
   parser.add_argument("--bitness", help="build target bitness", required=True)
-  args = parser.parse_args()
-  return args
+  return parser.parse_args()
 
 
 def main():
@@ -118,7 +117,7 @@ def main():
       candidates.append(sym)
     exit_code = proc.wait()
     if exit_code != 0:
-      print("{} failed, exit={}".format(DUMPBIN, exit_code))
+      print(f"{DUMPBIN} failed, exit={exit_code}")
       return exit_code
   tmpfile.file.close()
 
@@ -129,7 +128,7 @@ def main():
     taken = set()
 
     # Header for the def file.
-    def_fp.write("LIBRARY " + args.target + "\n")
+    def_fp.write(f"LIBRARY {args.target}" + "\n")
     def_fp.write("EXPORTS\n")
     if args.bitness == "64":
       def_fp.write("\t??1OpDef@tensorflow@@UEAA@XZ\n")
@@ -166,13 +165,12 @@ def main():
       taken.add(decorated)
   exit_code = proc.wait()
   if exit_code != 0:
-    print("{} failed, exit={}".format(UNDNAME, exit_code))
+    print(f"{UNDNAME} failed, exit={exit_code}")
     return exit_code
 
   os.unlink(tmpfile.name)
 
-  print("symbols={}, taken={}, dupes={}"
-        .format(len(candidates), len(taken), dupes))
+  print(f"symbols={len(candidates)}, taken={len(taken)}, dupes={dupes}")
   return 0
 
 

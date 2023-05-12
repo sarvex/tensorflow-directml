@@ -355,8 +355,7 @@ def read_batch_features(file_pattern,
       num_epochs=num_epochs,
       shuffle_buffer_size=capacity)
   iterator = dataset_ops.make_one_shot_iterator(dataset)
-  outputs = iterator.get_next()
-  return outputs
+  return iterator.get_next()
 
 
 class SqlDataset(readers.SqlDataset):

@@ -202,8 +202,7 @@ class _CudnnRNN(base_layer.Layer):
     cudnn_rnn_ops.check_input_mode(input_mode)
 
     if dtype not in [dtypes.float16, dtypes.float32, dtypes.float64]:
-      raise ValueError("Only support float16, float32, float64, provided %s" %
-                       dtype)
+      raise ValueError(f"Only support float16, float32, float64, provided {dtype}")
     # Layer self.dtype is type name, the original DType object is kept here.
     self._plain_dtype = dtype
     self._num_layers = num_layers
@@ -277,8 +276,8 @@ class _CudnnRNN(base_layer.Layer):
     """Shapes of Cudnn canonical weight tensors."""
     if not self._input_size:
       raise RuntimeError(
-          "%s.canonical_weight_shapes invoked before input shape is known" %
-          type(self).__name__)
+          f"{type(self).__name__}.canonical_weight_shapes invoked before input shape is known"
+      )
 
     shapes = []
     for i in range(self._num_layers):
@@ -417,8 +416,8 @@ class _CudnnRNN(base_layer.Layer):
       TypeError: initial_state is not a tuple.
     """
     if initial_state is not None and not isinstance(initial_state, tuple):
-      raise TypeError("Invalid initial_state type: %s, expecting tuple." %
-                      initial_state)
+      raise TypeError(
+          f"Invalid initial_state type: {initial_state}, expecting tuple.")
     dtype = self.dtype
     inputs = ops.convert_to_tensor(inputs, dtype=dtype)
 
@@ -447,9 +446,10 @@ class _CudnnRNN(base_layer.Layer):
     raise NotImplementedError
 
   def _zero_state(self, batch_size):
-    res = []
-    for sp in self.state_shape(batch_size):
-      res.append(array_ops.zeros(sp, dtype=self.dtype))
+    res = [
+        array_ops.zeros(sp, dtype=self.dtype)
+        for sp in self.state_shape(batch_size)
+    ]
     return tuple(res)
 
   def _canonical_weight_shape(self, layer):
@@ -459,8 +459,8 @@ class _CudnnRNN(base_layer.Layer):
                        (layer, 0, self._num_layers - 1))
     if not self._input_size:
       raise RuntimeError(
-          "%s._canonical_weight_shape invoked before input shape is known" %
-          type(self).__name__)
+          f"{type(self).__name__}._canonical_weight_shape invoked before input shape is known"
+      )
 
     input_size = self._input_size
     num_units = self._num_units
@@ -469,11 +469,10 @@ class _CudnnRNN(base_layer.Layer):
 
     if layer == 0:
       wts_applied_on_inputs = [(num_units, input_size)] * num_gates
+    elif is_bidi:
+      wts_applied_on_inputs = [(num_units, 2 * num_units)] * num_gates
     else:
-      if is_bidi:
-        wts_applied_on_inputs = [(num_units, 2 * num_units)] * num_gates
-      else:
-        wts_applied_on_inputs = [(num_units, num_units)] * num_gates
+      wts_applied_on_inputs = [(num_units, num_units)] * num_gates
     wts_applied_on_hidden_states = [(num_units, num_units)] * num_gates
     tf_wts = wts_applied_on_inputs + wts_applied_on_hidden_states
     return tf_wts if not is_bidi else tf_wts * 2
@@ -486,8 +485,8 @@ class _CudnnRNN(base_layer.Layer):
   def _canonical_to_opaque(self, cu_weights, cu_biases):
     if not self._input_size:
       raise RuntimeError(
-          "%s._canonical_to_opaque invoked before input shape is known" %
-          type(self).__name__)
+          f"{type(self).__name__}._canonical_to_opaque invoked before input shape is known"
+      )
     with ops.device("/gpu:0"):
       return cudnn_rnn_ops.cudnn_rnn_canonical_to_opaque_params(
           rnn_mode=self._rnn_mode,
@@ -530,7 +529,7 @@ class _CudnnRNN(base_layer.Layer):
     """
     if self._saveable is not None:
       raise RuntimeError("Cudnn saveable already created.")
-    self._saveable = self._saveable_cls(  # pylint:disable=not-callable
+    self._saveable = self._saveable_cls(
         opaque_params=self.trainable_variables[0],
         num_layers=self.num_layers,
         num_units=self.num_units,
@@ -538,7 +537,8 @@ class _CudnnRNN(base_layer.Layer):
         input_mode=self.input_mode,
         direction=self.direction,
         scope=vs.get_variable_scope(),
-        name="%s_saveable" % self.trainable_variables[0].name.split(":")[0])
+        name=f'{self.trainable_variables[0].name.split(":")[0]}_saveable',
+    )
     self._saveable._add_trackable_dependencies(  # pylint: disable=protected-access
         trackable=self,
         dtype=self._plain_dtype)

@@ -81,7 +81,7 @@ def create_test_objects(cluster_spec=None,
         cluster_spec=cluster_spec,
         task_type=task_type,
         task_id=task_id)
-    target = 'grpc://' + cluster_spec[WORKER][task_id]
+    target = f'grpc://{cluster_spec[WORKER][task_id]}'
   else:
     target = ''
 
@@ -112,10 +112,8 @@ class ParameterServerStrategyTestBase(
   def _test_device_assignment_distributed(self, task_type, task_id, num_gpus):
     worker_device = '/job:%s/replica:0/task:%d' % (task_type, task_id)
     d, _, sess_config = self._get_test_objects(task_type, task_id, num_gpus)
-    with ops.Graph().as_default(), \
-         self.cached_session(target=self._default_target,
-                             config=sess_config) as sess, \
-         d.scope():
+    with (ops.Graph().as_default(), self.cached_session(target=self._default_target,
+                               config=sess_config) as sess, d.scope()):
 
       # Define a variable outside the call_for_each_replica scope.
       n = variable_scope.get_variable('n', initializer=10.0)
@@ -131,9 +129,9 @@ class ParameterServerStrategyTestBase(
         a = constant_op.constant(1.0)
         b = constant_op.constant(2.0)
         c = a + b
-        self.assertEqual(a.device, worker_device + '/' + last_part_device)
-        self.assertEqual(b.device, worker_device + '/' + last_part_device)
-        self.assertEqual(c.device, worker_device + '/' + last_part_device)
+        self.assertEqual(a.device, f'{worker_device}/{last_part_device}')
+        self.assertEqual(b.device, f'{worker_device}/{last_part_device}')
+        self.assertEqual(c.device, f'{worker_device}/{last_part_device}')
 
         # The device scope is ignored for variables but not for normal ops.
         with ops.device('/job:worker/task:0'):
@@ -146,8 +144,7 @@ class ParameterServerStrategyTestBase(
         # called once before the model_fn.
         self.assertEqual(x.device, '/job:ps/task:1')
         self.assertEqual(x_add.device, x.device)
-        self.assertEqual(e.device,
-                         '/job:worker/replica:0/task:0/%s' % last_part_device)
+        self.assertEqual(e.device, f'/job:worker/replica:0/task:0/{last_part_device}')
 
         # The colocate_vars_with can override the distribution's device.
         with d.extended.colocate_vars_with(x):
@@ -173,12 +170,12 @@ class ParameterServerStrategyTestBase(
           z_add = z.assign_add(array_ops.identity(y))
         with ops.control_dependencies([z_add]):
           f = z + c
-        self.assertEqual(f.device, worker_device + '/' + last_part_device)
+        self.assertEqual(f.device, f'{worker_device}/{last_part_device}')
 
         # The device scope would merge with the default worker device.
         with ops.device('/CPU:1'):
           g = e + 1.0
-        self.assertEqual(g.device, worker_device + '/device:CPU:1')
+        self.assertEqual(g.device, f'{worker_device}/device:CPU:1')
 
         # Ths ops.colocate_with will be ignored when defining a variale but not
         # for a normal tensor.
@@ -570,7 +567,7 @@ class ParameterServerStrategyTest(
   def setUpClass(cls):
     cls._cluster_spec = multi_worker_test_base.create_in_process_cluster(
         num_workers=3, num_ps=2)
-    cls._default_target = 'grpc://' + cls._cluster_spec[WORKER][0]
+    cls._default_target = f'grpc://{cls._cluster_spec[WORKER][0]}'
 
   @combinations.generate(combinations.combine(mode=['graph']))
   def test_num_replicas_in_sync(self):
@@ -778,7 +775,7 @@ class ParameterServerStrategyWithChiefTest(ParameterServerStrategyTestBase,
   def setUpClass(cls):
     cls._cluster_spec = multi_worker_test_base.create_in_process_cluster(
         num_workers=3, num_ps=2, has_chief=True)
-    cls._default_target = 'grpc://' + cls._cluster_spec[CHIEF][0]
+    cls._default_target = f'grpc://{cls._cluster_spec[CHIEF][0]}'
 
   @combinations.generate(combinations.combine(mode=['graph']))
   def testSimpleBetweenGraph(self):
@@ -794,13 +791,15 @@ class ParameterServerStrategyWithChiefTest(ParameterServerStrategyTestBase,
   @combinations.generate(combinations.combine(mode=['graph']))
   def testGlobalStepIsWrappedOnTwoGPUs(self):
     strategy, _, _ = create_test_objects(num_gpus=2)
-    with ops.Graph().as_default(), strategy.scope():
+    with (ops.Graph().as_default(), strategy.scope()):
       created_step = training_util.create_global_step()
       get_step = training_util.get_global_step()
-      self.assertEqual(created_step, get_step,
-                       msg=('created_step %s type %s vs. get_step %s type %s' %
-                            (id(created_step), created_step.__class__.__name__,
-                             id(get_step), get_step.__class__.__name__)))
+      self.assertEqual(
+          created_step,
+          get_step,
+          msg=
+          f'created_step {id(created_step)} type {created_step.__class__.__name__} vs. get_step {id(get_step)} type {get_step.__class__.__name__}',
+      )
       self.assertIs(values.AggregatingVariable, type(created_step))
       self.assertIs(values.AggregatingVariable, type(get_step))
       self.assertIs(strategy, created_step.distribute_strategy)
@@ -808,13 +807,15 @@ class ParameterServerStrategyWithChiefTest(ParameterServerStrategyTestBase,
   @combinations.generate(combinations.combine(mode=['graph']))
   def testGlobalStepIsNotWrappedOnOneGPU(self):
     strategy, _, _ = create_test_objects(num_gpus=1)
-    with ops.Graph().as_default(), strategy.scope():
+    with (ops.Graph().as_default(), strategy.scope()):
       created_step = training_util.create_global_step()
       get_step = training_util.get_global_step()
-      self.assertEqual(created_step, get_step,
-                       msg=('created_step %s type %s vs. get_step %s type %s' %
-                            (id(created_step), created_step.__class__.__name__,
-                             id(get_step), get_step.__class__.__name__)))
+      self.assertEqual(
+          created_step,
+          get_step,
+          msg=
+          f'created_step {id(created_step)} type {created_step.__class__.__name__} vs. get_step {id(get_step)} type {get_step.__class__.__name__}',
+      )
       self.assertIs(resource_variable_ops.ResourceVariable, type(created_step))
       self.assertIs(resource_variable_ops.ResourceVariable, type(get_step))
       # All variables have an _distribute_strategy parameter. Only variable

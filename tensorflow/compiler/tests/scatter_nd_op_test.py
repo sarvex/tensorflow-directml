@@ -115,7 +115,7 @@ class ScatterNdTest(xla_test.XLATestCase):
 
   def _VariableRankTests(self, np_scatter, tf_scatter):
     for vtype in self.numeric_types:
-      for itype in set([np.int32, np.int64]).intersection(set(self.int_types)):
+      for itype in {np.int32, np.int64}.intersection(set(self.int_types)):
         self._VariableRankTest(np_scatter, tf_scatter, vtype, itype)
 
   def _runScatterNd(self, indices, updates, shape):

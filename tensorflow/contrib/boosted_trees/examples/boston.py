@@ -61,8 +61,7 @@ def _get_tfbt(output_dir, feature_cols):
 
   run_config = tf.contrib.learn.RunConfig(save_checkpoints_secs=300)
 
-  # Create a TF Boosted trees regression estimator.
-  estimator = GradientBoostedDecisionTreeRegressor(
+  return GradientBoostedDecisionTreeRegressor(
       learner_config=learner_config,
       # This should be the number of examples. For large datasets it can be
       # larger than the batch_size.
@@ -72,8 +71,8 @@ def _get_tfbt(output_dir, feature_cols):
       model_dir=output_dir,
       num_trees=FLAGS.num_trees,
       center_bias=False,
-      config=run_config)
-  return estimator
+      config=run_config,
+  )
 
 
 def _convert_fn(dtec, sorted_feature_names, num_dense, num_sparse_float,

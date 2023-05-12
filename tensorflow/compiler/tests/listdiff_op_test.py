@@ -70,8 +70,8 @@ class ListDiffTest(xla_test.XLATestCase):
       x = np.random.randint(int_low, int_high, size=x_size)
       y_size = np.random.randint(max_size + 1)
       y = np.random.randint(int_low, int_high, size=y_size)
-      out_idx = [(entry, pos) for pos, entry in enumerate(x) if entry not in y]
-      if out_idx:
+      if out_idx := [(entry, pos) for pos, entry in enumerate(x)
+                     if entry not in y]:
         out, idx = map(list, zip(*out_idx))
       else:
         out = []

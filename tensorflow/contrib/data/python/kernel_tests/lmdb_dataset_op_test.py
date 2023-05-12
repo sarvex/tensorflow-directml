@@ -64,7 +64,7 @@ class LMDBDatasetTest(test_base.DatasetTestBase):
       for _ in range(num_repeats):  # Dataset is repeated.
         for i in range(10):  # 10 records.
           k = compat.as_bytes(str(i))
-          v = compat.as_bytes(str(chr(ord("a") + i)))
+          v = compat.as_bytes(chr(ord("a") + i))
           self.assertEqual((k, v), sess.run(get_next))
       with self.assertRaises(errors.OutOfRangeError):
         sess.run(get_next)

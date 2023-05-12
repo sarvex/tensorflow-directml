@@ -93,7 +93,7 @@ class CudnnRNNBenchmark(test.Benchmark):
       batch_size = config["batch_size"]
       seq_length = config["seq_length"]
 
-      with ops.Graph().as_default(), ops.device("/device:GPU:0"):
+      with (ops.Graph().as_default(), ops.device("/device:GPU:0")):
         model = cudnn_rnn_ops.CudnnLSTM(num_layers, num_units, num_units)
         params_size_t = model.params_size()
         input_data = variables.Variable(
@@ -114,8 +114,10 @@ class CudnnRNNBenchmark(test.Benchmark):
             [output, output_h, output_c],
             [params, input_data, input_h, input_c])
         training_op = control_flow_ops.group(*all_grads)
-        self._BenchmarkOp(training_op, "cudnn_lstm %s %s" %
-                          (config_name, self._GetConfigDesc(config)))
+        self._BenchmarkOp(
+            training_op,
+            f"cudnn_lstm {config_name} {self._GetConfigDesc(config)}",
+        )
 
   def benchmarkTfRNNLSTMTraining(self):
     test_configs = self._GetTestConfig()
@@ -125,7 +127,7 @@ class CudnnRNNBenchmark(test.Benchmark):
       batch_size = config["batch_size"]
       seq_length = config["seq_length"]
 
-      with ops.Graph().as_default(), ops.device("/device:GPU:0"):
+      with (ops.Graph().as_default(), ops.device("/device:GPU:0")):
         inputs = array_ops.zeros([batch_size, seq_length, num_units],
                                  dtypes.float32)
 
@@ -138,8 +140,10 @@ class CudnnRNNBenchmark(test.Benchmark):
         gradients = gradients_impl.gradients([outputs, final_state],
                                              trainable_variables)
         training_op = control_flow_ops.group(*gradients)
-        self._BenchmarkOp(training_op, "tf_rnn_lstm %s %s" %
-                          (config_name, self._GetConfigDesc(config)))
+        self._BenchmarkOp(
+            training_op,
+            f"tf_rnn_lstm {config_name} {self._GetConfigDesc(config)}",
+        )
 
   def benchmarkTfRNNLSTMBlockCellTraining(self):
     test_configs = self._GetTestConfig()
@@ -149,7 +153,7 @@ class CudnnRNNBenchmark(test.Benchmark):
       batch_size = config["batch_size"]
       seq_length = config["seq_length"]
 
-      with ops.Graph().as_default(), ops.device("/device:GPU:0"):
+      with (ops.Graph().as_default(), ops.device("/device:GPU:0")):
         inputs = array_ops.zeros([batch_size, seq_length, num_units],
                                  dtypes.float32)
 
@@ -162,8 +166,10 @@ class CudnnRNNBenchmark(test.Benchmark):
         gradients = gradients_impl.gradients([outputs, final_state],
                                              trainable_variables)
         training_op = control_flow_ops.group(*gradients)
-        self._BenchmarkOp(training_op, "tf_rnn_lstm_block_cell %s %s" %
-                          (config_name, self._GetConfigDesc(config)))
+        self._BenchmarkOp(
+            training_op,
+            f"tf_rnn_lstm_block_cell {config_name} {self._GetConfigDesc(config)}",
+        )
 
 
 if __name__ == "__main__":

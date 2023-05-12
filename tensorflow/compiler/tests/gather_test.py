@@ -37,9 +37,7 @@ class GatherTest(xla_test.XLATestCase):
     data = data.astype(dtype.as_numpy_dtype)
     # For complex types, adds an index-dependent imaginary component so we can
     # tell we got the right value.
-    if dtype.is_complex:
-      return data + 10j * data
-    return data
+    return data + 10j * data if dtype.is_complex else data
 
   def testScalar1D(self):
     with self.session() as session, self.test_scope():

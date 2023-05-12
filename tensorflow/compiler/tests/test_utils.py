@@ -27,13 +27,15 @@ def ConvertBetweenDataFormats(x, data_format_src, data_format_dst):
 
   valid_data_formats = ["NHWC", "NCHW", "HWNC", "HWCN"]
   if data_format_src not in valid_data_formats:
-    raise ValueError("data_format_src must be of %s, got %s." %
-                     (valid_data_formats, data_format_src))
+    raise ValueError(
+        f"data_format_src must be of {valid_data_formats}, got {data_format_src}."
+    )
   if data_format_dst not in valid_data_formats:
-    raise ValueError("data_format_dst must be of %s, got %s." %
-                     (valid_data_formats, data_format_dst))
+    raise ValueError(
+        f"data_format_dst must be of {valid_data_formats}, got {data_format_dst}."
+    )
   if len(x.shape) != 4:
-    raise ValueError("x must be 4D, got shape %s." % x.shape)
+    raise ValueError(f"x must be 4D, got shape {x.shape}.")
 
   if data_format_src == data_format_dst:
     return x
@@ -48,20 +50,21 @@ def PermuteDimsBetweenDataFormats(dims, data_format_src, data_format_dst):
 
   valid_data_formats = ["NHWC", "NCHW", "HWNC", "HWCN"]
   if data_format_src not in valid_data_formats:
-    raise ValueError("data_format_src must be of %s, got %s." %
-                     (valid_data_formats, data_format_src))
+    raise ValueError(
+        f"data_format_src must be of {valid_data_formats}, got {data_format_src}."
+    )
   if data_format_dst not in valid_data_formats:
-    raise ValueError("data_format_dst must be of %s, got %s." %
-                     (valid_data_formats, data_format_dst))
+    raise ValueError(
+        f"data_format_dst must be of {valid_data_formats}, got {data_format_dst}."
+    )
   if len(dims) != 4:
-    raise ValueError("dims must be of length 4, got %s." % dims)
+    raise ValueError(f"dims must be of length 4, got {dims}.")
 
   if data_format_src == data_format_dst:
     return dims
 
   dim_map = {d: i for i, d in enumerate(data_format_src)}
-  permuted_dims = [dims[dim_map[d]] for d in data_format_dst]
-  return permuted_dims
+  return [dims[dim_map[d]] for d in data_format_dst]
 
 
 _JIT_WARMUP_ITERATIONS = 10

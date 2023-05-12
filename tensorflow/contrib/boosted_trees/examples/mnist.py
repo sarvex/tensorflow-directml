@@ -86,16 +86,15 @@ def _get_tfbt(output_dir):
   learner_config.multi_class_strategy = (
       learner_pb2.LearnerConfig.DIAGONAL_HESSIAN)
 
-  # Create a TF Boosted trees estimator that can take in custom loss.
-  estimator = GradientBoostedDecisionTreeClassifier(
+  return GradientBoostedDecisionTreeClassifier(
       learner_config=learner_config,
       n_classes=num_classes,
       examples_per_layer=FLAGS.examples_per_layer,
       model_dir=output_dir,
       num_trees=FLAGS.num_trees,
       center_bias=False,
-      config=run_config)
-  return estimator
+      config=run_config,
+  )
 
 
 def _make_experiment_fn(output_dir):

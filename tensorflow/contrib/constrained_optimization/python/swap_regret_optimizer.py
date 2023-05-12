@@ -410,24 +410,22 @@ class _SwapRegretOptimizer(constrained_optimizer.ConstrainedOptimizer):
           if gradient is not None
       ]
       with ops.control_dependencies(gradients):
-        update_ops.append(
-            self.optimizer.apply_gradients(grads_and_vars, name="update"))
-        update_ops.append(
+        update_ops.extend((
+            self.optimizer.apply_gradients(grads_and_vars, name="update"),
             self.constraint_optimizer.apply_gradients(
-                matrix_grads_and_vars, name="optimizer_state_update"))
-
+                matrix_grads_and_vars, name="optimizer_state_update"),
+        ))
     with ops.control_dependencies(update_ops):
       if global_step is None:
         # If we don't have a global step, just project, and we're done.
         return self._projection_op(state, name=name)
-      else:
-        # If we have a global step, then we need to increment it in addition to
-        # projecting.
-        projection_op = self._projection_op(state, name="project")
-        with ops.colocate_with(global_step):
-          global_step_op = state_ops.assign_add(
-              global_step, 1, name="global_step_increment")
-        return control_flow_ops.group(projection_op, global_step_op, name=name)
+      # If we have a global step, then we need to increment it in addition to
+      # projecting.
+      projection_op = self._projection_op(state, name="project")
+      with ops.colocate_with(global_step):
+        global_step_op = state_ops.assign_add(
+            global_step, 1, name="global_step_increment")
+      return control_flow_ops.group(projection_op, global_step_op, name=name)
 
 
 class AdditiveSwapRegretOptimizer(_SwapRegretOptimizer):

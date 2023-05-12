@@ -39,10 +39,7 @@ from tensorflow.python.ops import nn
 
 
 def _logits_to_label_for_tree(logits, n_classes):
-  if n_classes == 2:
-    return math_ops.sigmoid(logits)
-  else:
-    return nn.softmax(logits)
+  return math_ops.sigmoid(logits) if n_classes == 2 else nn.softmax(logits)
 
 
 def create_dnn_to_tree_squared_loss_fn(n_classes):

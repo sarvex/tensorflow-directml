@@ -47,9 +47,10 @@ def clean(args):
     os.remove(tf_configure_path())
 
   subprocess.run(
-      "bazel --output_user_root={} clean".format(args.build_output),
+      f"bazel --output_user_root={args.build_output} clean",
       shell=True,
-      check=True)
+      check=True,
+  )
 
 
 def configure(args):
@@ -112,7 +113,7 @@ def build_tests(args):
 
     targets_and_tag_filters = [
         (
-            "//{}/tensorflow/python/...".format(args.test_prefix),
+            f"//{args.test_prefix}/tensorflow/python/...",
             [
                 "-tpu",
                 "-no_dml",
@@ -139,34 +140,34 @@ def build_tests(args):
                 "-no_dml",
                 "-manual",
             ],
-        )
+        ),
     ]
 
     for _, tag_filters in targets_and_tag_filters:
       if os.name == "nt":
         tag_filters.append("-no_windows")
 
-    cl = ["bazel"]
-    cl.append("--output_user_root={}".format(args.build_output))
-    cl.append("build")
+    cl = ["bazel", f"--output_user_root={args.build_output}", "build"]
     if args.subcommands:
       cl.append("--subcommands")
-    cl.append("--config=opt")
-    cl.append("--config=dml")
+    cl.extend(("--config=opt", "--config=dml"))
     if args.telemetry:
       cl.append("--config=dml_telemetry")
-    cl.append("--test_lang_filters=py,cc")
-    cl.append("--verbose_failures")
-    cl.append("--build_tests_only")
-    cl.append("--define=no_tensorflow_py_deps=true")
+    cl.extend((
+        "--test_lang_filters=py,cc",
+        "--verbose_failures",
+        "--build_tests_only",
+        "--define=no_tensorflow_py_deps=true",
+    ))
     if args.config == "debug":
       cl.append("--strip never")
-    if args.config == "debug" and sys.platform == "win32":
-      cl.append("--copt /wd4716")
-      cl.append("--copt /Z7")
-      cl.append("--copt /FS")
-      cl.append("--linkopt /DEBUG:FASTLINK")
-
+      if sys.platform == "win32":
+        cl.extend((
+            "--copt /wd4716",
+            "--copt /Z7",
+            "--copt /FS",
+            "--linkopt /DEBUG:FASTLINK",
+        ))
     # This is necessary because of name clashes when bazel tries to copy 2 DLLs
     # with the same name but different paths into the binary folder. This
     # doesn't affect the python package, but it's required to reliably build the
@@ -183,9 +184,11 @@ def build_tests(args):
     # other parameters are the same.
     for target, tag_filters in targets_and_tag_filters:
       target_cl = cl.copy()
-      target_cl.append("--build_tag_filters={}".format(','.join(tag_filters)))
-      target_cl.append("--test_tag_filters={}".format(','.join(tag_filters)))
-      target_cl.append(target)
+      target_cl.extend((
+          f"--build_tag_filters={','.join(tag_filters)}",
+          f"--test_tag_filters={','.join(tag_filters)}",
+          target,
+      ))
       subprocess.run(" ".join(target_cl), shell=True, check=True)
   finally:
     if os.name == "nt":
@@ -203,24 +206,23 @@ def build_tests(args):
 def build(args):
   """Runs bazel to build TensorFlow's build_pip_package target."""
 
-  cl = ["bazel"]
-  cl.append("--output_user_root={}".format(args.build_output))
-  cl.append("build")
+  cl = ["bazel", f"--output_user_root={args.build_output}", "build"]
   if args.force_debug:
     cl.append("-c dbg")
   if args.subcommands:
     cl.append("--subcommands")
-  cl.append("--config=opt")
-  cl.append("--config=dml")
+  cl.extend(("--config=opt", "--config=dml"))
   if args.telemetry:
     cl.append("--config=dml_telemetry")
   if args.config == "debug":
     cl.append("--strip never")
-  if args.config == "debug" and sys.platform == "win32":
-    cl.append("--copt /wd4716")
-    cl.append("--copt /Z7")
-    cl.append("--copt /FS")
-    cl.append("--linkopt /DEBUG:FASTLINK")
+    if sys.platform == "win32":
+      cl.extend((
+          "--copt /wd4716",
+          "--copt /Z7",
+          "--copt /FS",
+          "--linkopt /DEBUG:FASTLINK",
+      ))
   cl.append(args.target)
   subprocess.run(" ".join(cl), shell=True, check=True)
 
@@ -278,10 +280,11 @@ def create_c_package(args):
   source_dir = os.path.split(os.path.dirname(os.path.realpath(__file__)))[-1]
   dml_redist_dir = os.path.join(
       os.path.dirname(os.path.realpath(__file__)),
-      ("bazel-%s" % source_dir),
+      f"bazel-{source_dir}",
       "external",
       "dml_redist",
-      "directml")
+      "directml",
+  )
 
   with tarfile.open(tarball_path) as tarball:
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -289,16 +292,15 @@ def create_c_package(args):
       dml_commit = None
       with open(Path(dml_redist_dir)/'include'/'DirectMLConfig.h', 'r', encoding='utf-8-sig') as dml_config_header:
         for line in dml_config_header:
-          m = re.match('#define DIRECTML_SOURCE_VERSION "(.*)"', line)
-          if m:
-            dml_commit = m.group(1)
+          if m := re.match('#define DIRECTML_SOURCE_VERSION "(.*)"', line):
+            dml_commit = m[1]
             break
       if not dml_commit:
         raise "Could not determine DirectML module version"
 
       # Extract tarball produced by the built-in Bazel target.
       tarball.extractall(temp_dir)
-      
+
       if sys.platform == "win32":
         package_name = 'libtensorflow-win-x64'
 
@@ -316,32 +318,27 @@ def create_c_package(args):
 
         # The DirectML module in the redist package may have the commit baked into it already (preview redist);
         # otherwise, the module is a release build of DirectML.
-        dml_preview_path = Path(dml_redist_dir)/'bin'/'x64-win'/('DirectML.%s.dll' % dml_commit)
+        dml_preview_path = (Path(dml_redist_dir) / 'bin' / 'x64-win' /
+                            f'DirectML.{dml_commit}.dll')
         dml_release_path = Path(dml_redist_dir)/'bin'/'x64-win'/'DirectML.dll'
-        dml_target_path = Path(temp_dir)/'lib'/('DirectML.%s.dll' % dml_commit)
-        
-        if os.path.exists(dml_preview_path):
-            shutil.copy(dml_preview_path, dml_target_path)
-        elif os.path.exists(dml_release_path):
-            shutil.copy(dml_release_path, dml_target_path)
-        else:
-            raise "Could not locate DirectML module in redist package"
+        dml_target_path = Path(temp_dir)/'lib' / f'DirectML.{dml_commit}.dll'
+
       else:
         package_name = 'libtensorflow-linux-x64'
 
         # The DirectML module in the redist package may have the commit baked into it already (preview redist);
         # otherwise, the module is a release build of DirectML.
-        dml_preview_path = Path(dml_redist_dir)/'bin'/'x64-linux'/('libdirectml.%s.so' % dml_commit)
+        dml_preview_path = (Path(dml_redist_dir) / 'bin' / 'x64-linux' /
+                            f'libdirectml.{dml_commit}.so')
         dml_release_path = Path(dml_redist_dir)/'bin'/'x64-linux'/'libdirectml.so'
-        dml_target_path = Path(temp_dir)/'lib'/('libdirectml.%s.so' % dml_commit)
-        
-        if os.path.exists(dml_preview_path):
-            shutil.copy(dml_preview_path, dml_target_path)
-        elif os.path.exists(dml_release_path):
-            shutil.copy(dml_release_path, dml_target_path)
-        else:
-            raise "Could not locate DirectML module in redist package"
+        dml_target_path = Path(temp_dir)/'lib' / f'libdirectml.{dml_commit}.so'
 
+      if os.path.exists(dml_preview_path):
+          shutil.copy(dml_preview_path, dml_target_path)
+      elif os.path.exists(dml_release_path):
+          shutil.copy(dml_release_path, dml_target_path)
+      else:
+          raise "Could not locate DirectML module in redist package"
       # Copy license files.
       shutil.copy(Path(dml_redist_dir)/'LICENSE.txt', Path(temp_dir)/'DirectML_LICENSE.txt')
       shutil.copy(Path(dml_redist_dir)/'ThirdPartyNotices.txt', Path(temp_dir)/'DirectML_ThirdPartyNotices.txt')
@@ -435,9 +432,11 @@ def main():
       "tfdml_build")
 
   parser.add_argument(
-      "--build_output", "-o",
+      "--build_output",
+      "-o",
       default=default_build_output,
-      help="Build output path. Defaults to {}.".format(default_build_output))
+      help=f"Build output path. Defaults to {default_build_output}.",
+  )
 
   args = parser.parse_args()
 

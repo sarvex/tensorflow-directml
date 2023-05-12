@@ -86,7 +86,8 @@ class EqualitySplitHandler(base_split_handler.BaseSplitHandler):
         init_stamp_token,
         gradient_shape,
         hessian_shape,
-        name="StatsAccumulator/{}".format(self._name))
+        name=f"StatsAccumulator/{self._name}",
+    )
     self._sparse_int_column = sparse_int_column
     self._weak_learner_type = weak_learner_type
 
@@ -217,5 +218,4 @@ class EqualitySplitHandler(base_split_handler.BaseSplitHandler):
     return (are_splits_ready, partition_ids, gains, split_infos)
 
   def reset(self, stamp_token, next_stamp_token):
-    reset = self._stats_accumulator.flush(stamp_token, next_stamp_token)
-    return reset
+    return self._stats_accumulator.flush(stamp_token, next_stamp_token)

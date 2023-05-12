@@ -413,8 +413,7 @@ def viterbi_decode(score, transition_params):
     backpointers[t] = np.argmax(v, 0)
 
   viterbi = [np.argmax(trellis[-1])]
-  for bp in reversed(backpointers[1:]):
-    viterbi.append(bp[viterbi[-1]])
+  viterbi.extend(bp[viterbi[-1]] for bp in reversed(backpointers[1:]))
   viterbi.reverse()
 
   viterbi_score = np.max(trellis[-1])

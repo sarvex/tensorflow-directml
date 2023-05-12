@@ -46,10 +46,7 @@ def powersign_update_numpy(params,
                            py_sign_decay_fn=None,
                            t=None):
   m_t = beta * m + (1 - beta) * g_t
-  if py_sign_decay_fn is None:
-    sign_decayed = 1.0
-  else:
-    sign_decayed = py_sign_decay_fn(t-1)
+  sign_decayed = 1.0 if py_sign_decay_fn is None else py_sign_decay_fn(t-1)
   multiplier = base ** (sign_decayed * np.sign(g_t) * np.sign(m_t))
   params_t = params - lr * multiplier * g_t
   return params_t, m_t

@@ -44,17 +44,17 @@ class StatsAccumulatorSaveable(saver.BaseSaverBuilder.SaveableObject):
      hessians) = self.serialize()
     specs = [
         saver.BaseSaverBuilder.SaveSpec(stamp_token, slice_spec,
-                                        saver_name + "_stamp"),
+                                        f"{saver_name}_stamp"),
         saver.BaseSaverBuilder.SaveSpec(num_updates, slice_spec,
-                                        saver_name + "_num_updates"),
+                                        f"{saver_name}_num_updates"),
         saver.BaseSaverBuilder.SaveSpec(partition_ids, slice_spec,
-                                        saver_name + "_partition_ids"),
+                                        f"{saver_name}_partition_ids"),
         saver.BaseSaverBuilder.SaveSpec(feature_ids, slice_spec,
-                                        saver_name + "_feature_ids"),
+                                        f"{saver_name}_feature_ids"),
         saver.BaseSaverBuilder.SaveSpec(gradients, slice_spec,
-                                        saver_name + "_gradients"),
+                                        f"{saver_name}_gradients"),
         saver.BaseSaverBuilder.SaveSpec(hessians, slice_spec,
-                                        saver_name + "hessians"),
+                                        f"{saver_name}hessians"),
     ]
     super(StatsAccumulatorSaveable, self).__init__(self._resource_handle, specs,
                                                    name)
@@ -133,11 +133,7 @@ class StatsAccumulator(tracking.TrackableResource):
     self._hessian_shape = hessian_shape
     self._container = container
 
-    if (gradient_shape.rank == 0 and hessian_shape.rank == 0):
-      self._is_scalar = True
-    else:
-      self._is_scalar = False
-
+    self._is_scalar = gradient_shape.rank == 0 and hessian_shape.rank == 0
     if name is not None:
       name = _PATTERN.sub("", name)
     with ops.name_scope(name, "StatsAccumulator") as name:

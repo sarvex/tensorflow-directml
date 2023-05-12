@@ -68,8 +68,7 @@ def RunMetadataLabels(run_metadata):
   """Returns all labels in run_metadata."""
   labels = []
   for dev_stats in run_metadata.step_stats.dev_stats:
-    for node_stats in dev_stats.node_stats:
-      labels.append(node_stats.timeline_label)
+    labels.extend(node_stats.timeline_label for node_stats in dev_stats.node_stats)
   return labels
 
 
@@ -119,13 +118,13 @@ class JitLaunchTest(test.TestCase):
           sess, compiled_op, feeds,
           config_pb2.RunOptions(trace_level=config_pb2.RunOptions.FULL_TRACE),
           run_metadata)
-      print("Compiled Result {}".format(compiled))
+      print(f"Compiled Result {compiled}")
 
       if require_kernel_launch:
         self.assert_(MetadataHasXlaRunOp(run_metadata))
 
         direct = sess.run(direct_op, feeds)
-        print("Direct Result {}".format(direct))
+        print(f"Direct Result {direct}")
 
         if (isinstance(compiled, (tuple, list)) and
             (isinstance(direct, (tuple, list)))):

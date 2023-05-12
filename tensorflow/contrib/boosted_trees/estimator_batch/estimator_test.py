@@ -136,7 +136,7 @@ def _quantile_regression_input_fns(two_dimension=False):
 class BoostedTreeEstimatorTest(test_util.TensorFlowTestCase):
 
   def setUp(self):
-    self._export_dir_base = tempfile.mkdtemp() + "export/"
+    self._export_dir_base = f"{tempfile.mkdtemp()}export/"
     gfile.MkDir(self._export_dir_base)
 
   def _assert_checkpoint_and_return_model(self, model_dir, global_step):
@@ -430,10 +430,7 @@ class BoostedTreeEstimatorTest(test_util.TensorFlowTestCase):
 
     model_upper.fit(input_fn=train_input_fn, steps=1000)
     result_iter = model_upper.predict(input_fn=test_input_fn)
-    upper = []
-    for prediction_dict in result_iter:
-      upper.append(prediction_dict["scores"])
-
+    upper = [prediction_dict["scores"] for prediction_dict in result_iter]
     frac_below_upper = round(1. * np.count_nonzero(upper > y) / len(y), 3)
     # +/- 3%
     self.assertTrue(frac_below_upper >= 0.92)
@@ -465,10 +462,7 @@ class BoostedTreeEstimatorTest(test_util.TensorFlowTestCase):
 
     model_upper.fit(input_fn=train_input_fn, steps=1000)
     result_iter = model_upper.predict(input_fn=test_input_fn)
-    upper = []
-    for prediction_dict in result_iter:
-      upper.append(prediction_dict["scores"])
-
+    upper = [prediction_dict["scores"] for prediction_dict in result_iter]
     count_below_upper = np.count_nonzero(upper > y, axis=0)
     count_both_below_upper = np.count_nonzero(np.prod(upper > y, axis=1))
     frac_below_upper_0 = round(1. * count_below_upper[0] / len(y), 3)

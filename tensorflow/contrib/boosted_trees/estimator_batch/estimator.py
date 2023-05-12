@@ -213,10 +213,7 @@ class GradientBoostedDecisionTreeRegressor(estimator.Estimator):
         label_dimension=label_dimension,
         weight_column_name=weight_column_name,
         enable_centered_bias=False)
-    if label_dimension == 1:
-      learner_config.num_classes = 2
-    else:
-      learner_config.num_classes = label_dimension
+    learner_config.num_classes = 2 if label_dimension == 1 else label_dimension
     super(GradientBoostedDecisionTreeRegressor, self).__init__(
         model_fn=model.model_builder,
         params={

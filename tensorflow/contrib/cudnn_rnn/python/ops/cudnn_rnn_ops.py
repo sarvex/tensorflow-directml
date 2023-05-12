@@ -123,42 +123,45 @@ class CudnnCompatibleGRUCell(rnn_cell_impl.GRUCell):
 
   def build(self, inputs_shape):
     if inputs_shape[1].value is None:
-      raise ValueError("Expected inputs.shape[-1] to be known, saw shape: %s" %
-                       inputs_shape)
+      raise ValueError(
+          f"Expected inputs.shape[-1] to be known, saw shape: {inputs_shape}")
 
     input_depth = inputs_shape[1].value
     self._gate_kernel = self.add_variable(
-        "gates/%s" % _WEIGHTS_VARIABLE_NAME,
+        f"gates/{_WEIGHTS_VARIABLE_NAME}",
         shape=[input_depth + self._num_units, 2 * self._num_units],
-        initializer=self._kernel_initializer)
+        initializer=self._kernel_initializer,
+    )
     self._gate_bias = self.add_variable(
-        "gates/%s" % _BIAS_VARIABLE_NAME,
+        f"gates/{_BIAS_VARIABLE_NAME}",
         shape=[2 * self._num_units],
-        initializer=(self._bias_initializer
-                     if self._bias_initializer is not None else
-                     init_ops.constant_initializer(1.0, dtype=self.dtype)))
+        initializer=(self._bias_initializer if self._bias_initializer is not None
+                     else init_ops.constant_initializer(1.0, dtype=self.dtype)),
+    )
 
     self._candidate_input_kernel = self.add_variable(
-        "candidate/input_projection/%s" % _WEIGHTS_VARIABLE_NAME,
+        f"candidate/input_projection/{_WEIGHTS_VARIABLE_NAME}",
         shape=[input_depth, self._num_units],
-        initializer=self._kernel_initializer)
+        initializer=self._kernel_initializer,
+    )
     self._candidate_hidden_kernel = self.add_variable(
-        "candidate/hidden_projection/%s" % _WEIGHTS_VARIABLE_NAME,
+        f"candidate/hidden_projection/{_WEIGHTS_VARIABLE_NAME}",
         shape=[self._num_units, self._num_units],
-        initializer=self._kernel_initializer)
+        initializer=self._kernel_initializer,
+    )
 
     self._candidate_input_bias = self.add_variable(
-        "candidate/input_projection/%s" % _BIAS_VARIABLE_NAME,
+        f"candidate/input_projection/{_BIAS_VARIABLE_NAME}",
         shape=[self._num_units],
-        initializer=(self._bias_initializer
-                     if self._bias_initializer is not None else
-                     init_ops.zeros_initializer(dtype=self.dtype)))
+        initializer=(self._bias_initializer if self._bias_initializer is not None
+                     else init_ops.zeros_initializer(dtype=self.dtype)),
+    )
     self._candidate_hidden_bias = self.add_variable(
-        "candidate/hidden_projection/%s" % _BIAS_VARIABLE_NAME,
+        f"candidate/hidden_projection/{_BIAS_VARIABLE_NAME}",
         shape=[self._num_units],
-        initializer=(self._bias_initializer
-                     if self._bias_initializer is not None else
-                     init_ops.zeros_initializer(dtype=self.dtype)))
+        initializer=(self._bias_initializer if self._bias_initializer is not None
+                     else init_ops.zeros_initializer(dtype=self.dtype)),
+    )
 
   def call(self, inputs, state):
     """Gated recurrent unit (GRU) with nunits cells."""
@@ -224,8 +227,7 @@ class CudnnParamsFormatConverter(object):
     cu_weights, cu_biases = self._tf_canonical_to_cu_canonical(
         tf_canonicals, weights_proj)
     cu_weights = [array_ops.reshape(w, [-1]) for w in cu_weights]
-    opaque_params = self._cu_canonical_to_opaque(cu_weights, cu_biases)
-    return opaque_params
+    return self._cu_canonical_to_opaque(cu_weights, cu_biases)
 
   def opaque_to_tf_canonical(self, opaque_param):
     r"""Converts cudnn opaque param to tf canonical weights."""
@@ -808,9 +810,7 @@ class CudnnOpaqueParamsSaveable(saver.BaseSaverBuilder.SaveableObject):
     self._param_names = tf_weight_names + tf_bias_names
     prefixed_param_names = tf_weight_names + tf_bias_names
     if self._scope:
-      prefixed_param_names = [
-          "%s/%s" % (self._scope, pn) for pn in prefixed_param_names
-      ]
+      prefixed_param_names = [f"{self._scope}/{pn}" for pn in prefixed_param_names]
     specs = [
         saver.BaseSaverBuilder.SaveSpec(param, slice_spec, param_name)
         for param, param_name in zip(params, prefixed_param_names)
@@ -894,13 +894,12 @@ class CudnnOpaqueParamsSaveable(saver.BaseSaverBuilder.SaveableObject):
   def _tf_canonical_name_prefix(self, layer, is_fwd=True):
     if self._direction == CUDNN_RNN_UNIDIRECTION:
       return "rnn/multi_rnn_cell/cell_%d/%s" % (layer, self._rnn_cell_name)
+    if is_fwd:
+      return ("stack_bidirectional_rnn/cell_%d/bidirectional_rnn/fw/%s" %
+              (layer, self._rnn_cell_name))
     else:
-      if is_fwd:
-        return ("stack_bidirectional_rnn/cell_%d/bidirectional_rnn/fw/%s" %
-                (layer, self._rnn_cell_name))
-      else:
-        return ("stack_bidirectional_rnn/cell_%d/bidirectional_rnn/bw/%s" %
-                (layer, self._rnn_cell_name))
+      return ("stack_bidirectional_rnn/cell_%d/bidirectional_rnn/bw/%s" %
+              (layer, self._rnn_cell_name))
 
   def _tf_canonical_names_single_layer(self, prefix, tf_weights_names,
                                        tf_biases_names):
@@ -915,8 +914,8 @@ class CudnnLSTMSaveable(CudnnOpaqueParamsSaveable):
 
   def _tf_canonical_names_single_layer(self, prefix, tf_weights_names,
                                        tf_bias_names):
-    tf_weights_names.append(prefix + "/kernel")
-    tf_bias_names.append(prefix + "/bias")
+    tf_weights_names.append(f"{prefix}/kernel")
+    tf_bias_names.append(f"{prefix}/bias")
 
   def _trackable_track_params(self, trackable, params):
     """Track parameters for compatibility with CudnnCompatibleLSTMCell."""
@@ -950,13 +949,13 @@ class CudnnGRUSaveable(CudnnOpaqueParamsSaveable):
 
   def _tf_canonical_names_single_layer(self, prefix, tf_weights_names,
                                        tf_bias_names):
-    tf_weights_names.append(prefix + "/gates/kernel")
-    tf_weights_names.append(prefix + "/candidate/input_projection/kernel")
-    tf_weights_names.append(prefix + "/candidate/hidden_projection/kernel")
+    tf_weights_names.append(f"{prefix}/gates/kernel")
+    tf_weights_names.append(f"{prefix}/candidate/input_projection/kernel")
+    tf_weights_names.append(f"{prefix}/candidate/hidden_projection/kernel")
 
-    tf_bias_names.append(prefix + "/gates/bias")
-    tf_bias_names.append(prefix + "/candidate/input_projection/bias")
-    tf_bias_names.append(prefix + "/candidate/hidden_projection/bias")
+    tf_bias_names.append(f"{prefix}/gates/bias")
+    tf_bias_names.append(f"{prefix}/candidate/input_projection/bias")
+    tf_bias_names.append(f"{prefix}/candidate/hidden_projection/bias")
 
 
 class CudnnRNNTanhSaveable(CudnnLSTMSaveable):
@@ -1004,8 +1003,8 @@ _cudnn_rnn_common_doc_string = """
 def _check_rnn_mode(rnn_mode):
   if rnn_mode not in (CUDNN_LSTM, CUDNN_GRU, CUDNN_RNN_TANH, CUDNN_RNN_RELU):
     raise ValueError(
-        "Invalid rnn_mode: %s, expect one of (%s, %s, %s, %s)" %
-        (rnn_mode, CUDNN_LSTM, CUDNN_GRU, CUDNN_RNN_TANH, CUDNN_RNN_RELU))
+        f"Invalid rnn_mode: {rnn_mode}, expect one of ({CUDNN_LSTM}, {CUDNN_GRU}, {CUDNN_RNN_TANH}, {CUDNN_RNN_RELU})"
+    )
 
 
 def _get_seed(seed):
@@ -1018,16 +1017,17 @@ def _get_seed(seed):
 def check_direction(direction):
   """Check validity of direction."""
   if direction not in (CUDNN_RNN_UNIDIRECTION, CUDNN_RNN_BIDIRECTION):
-    raise ValueError("Invalid direction: %s, expecting %s or %s" %
-                     (direction, CUDNN_RNN_UNIDIRECTION, CUDNN_RNN_BIDIRECTION))
+    raise ValueError(
+        f"Invalid direction: {direction}, expecting {CUDNN_RNN_UNIDIRECTION} or {CUDNN_RNN_BIDIRECTION}"
+    )
 
 
 def check_input_mode(input_mode):
   if input_mode not in (CUDNN_INPUT_LINEAR_MODE, CUDNN_INPUT_SKIP_MODE,
                         CUDNN_INPUT_AUTO_MODE):
-    raise ValueError("Invalid input_mode: %s, expect one of (%s, %s, %s)" %
-                     (input_mode, CUDNN_INPUT_LINEAR_MODE,
-                      CUDNN_INPUT_SKIP_MODE, CUDNN_INPUT_AUTO_MODE))
+    raise ValueError(
+        f"Invalid input_mode: {input_mode}, expect one of ({CUDNN_INPUT_LINEAR_MODE}, {CUDNN_INPUT_SKIP_MODE}, {CUDNN_INPUT_AUTO_MODE})"
+    )
 
 
 def _get_num_params(rnn_mode, num_layers, direction):
@@ -1978,7 +1978,7 @@ class _CudnnRNNNoInputC(_CudnnRNN):
     """
 
     if direction not in (CUDNN_RNN_UNIDIRECTION, CUDNN_RNN_BIDIRECTION):
-      raise ValueError("Invalid direction: %s" % direction)
+      raise ValueError(f"Invalid direction: {direction}")
 
     super(_CudnnRNNNoInputC, self).__init__(
         self._rnn_mode,

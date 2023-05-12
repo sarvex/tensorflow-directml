@@ -182,12 +182,7 @@ class EagerTest(xla_test.XLATestCase):
       var = resource_variable_ops.ResourceVariable(
           array_ops.ones([32, 1024, 1024]))
 
-      # Read the same variable 100 times. If the underlying tensor
-      # is not copied, this is a trivial operation. If it is copied,
-      # this will eat over 13GB and OOM.
-      values = []
-      for _ in range(100):
-        values.append(var.value())
+      values = [var.value() for _ in range(100)]
 
   # The shape, shape_n, size, and rank are tested here because their
   # execution kernels (as opposed to compilation only tf2xla kernels)
@@ -649,10 +644,7 @@ class EagerFunctionTest(xla_test.XLATestCase):
     with self.test_scope():
       @def_function.function
       def f(pred, value):
-        if pred:
-          return value + 1.0
-        else:
-          return value - 1.0
+        return value + 1.0 if pred else value - 1.0
 
       plus_one = f(constant_op.constant(True), constant_op.constant(10.0))
       minus_one = f(constant_op.constant(False), constant_op.constant(10.0))

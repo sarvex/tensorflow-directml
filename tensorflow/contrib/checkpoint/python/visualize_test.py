@@ -45,8 +45,7 @@ class MyModel(training.Model):
     self._second = core.Dense(1, use_bias=False)
 
   def call(self, values):
-    ret = self._second(self._named_dense(values))
-    return ret
+    return self._second(self._named_dense(values))
 
 
 class DotGraphTests(test.TestCase):

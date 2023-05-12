@@ -39,7 +39,7 @@ class FusedBatchNormTest(xla_test.XLATestCase, parameterized.TestCase):
 
   def _reference_training(self, x, scale, offset, epsilon, data_format):
     if data_format != "NHWC":
-      raise ValueError("data_format must be NHWC, got %s." % data_format)
+      raise ValueError(f"data_format must be NHWC, got {data_format}.")
     x_square = x * x
     x_square_sum = np.sum(x_square, (0, 1, 2))
     x_sum = np.sum(x, axis=(0, 1, 2))
@@ -62,7 +62,7 @@ class FusedBatchNormTest(xla_test.XLATestCase, parameterized.TestCase):
     #   1/N * scale * rsqrt(var + epsilon) * (N * grad_y - sum(grad_y) -
     #   (x - mean) * sum(grad_y * (x - mean)) / (var + epsilon))
     if data_format != "NHWC":
-      raise ValueError("data_format must be NHWC, got %s." % data_format)
+      raise ValueError(f"data_format must be NHWC, got {data_format}.")
     grad_x = scale * (grad_y - np.mean(grad_y, axis=(0, 1, 2)) -
                       (x - mean) * np.mean(grad_y *
                                            (x - mean), axis=(0, 1, 2)) /

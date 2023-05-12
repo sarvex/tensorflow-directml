@@ -40,7 +40,7 @@ def main(args):
     return
 
   model_dir = args[1]
-  print('Using %s to store checkpoints.' % model_dir)
+  print(f'Using {model_dir} to store checkpoints.')
 
   # Define a Keras Model.
   model = tf.keras.Sequential()
@@ -65,7 +65,7 @@ def main(args):
   # Train and evaluate the model.
   keras_estimator.train(input_fn=input_fn, steps=10)
   eval_result = keras_estimator.evaluate(input_fn=input_fn)
-  print('Eval result: {}'.format(eval_result))
+  print(f'Eval result: {eval_result}')
 
 
 if __name__ == '__main__':

@@ -298,7 +298,7 @@ def ranking_model_builder(features,
         name="ensemble_model")
 
   # Extract the features.
-  if mode == learn.ModeKeys.TRAIN or mode == learn.ModeKeys.EVAL:
+  if mode in [learn.ModeKeys.TRAIN, learn.ModeKeys.EVAL]:
     # For ranking pairwise training, we extract two sets of features.
     if len(ranking_model_pair_keys) != 2:
       raise ValueError("You must provide keys for ranking.")
@@ -312,10 +312,10 @@ def ranking_model_builder(features,
     for name in training_features:
       feature = training_features[name]
       new_name = name[2:]
-      if name.startswith(left_pair_key + "."):
+      if name.startswith(f"{left_pair_key}."):
         features_1[new_name] = feature
       else:
-        assert name.startswith(right_pair_key + ".")
+        assert name.startswith(f"{right_pair_key}.")
         features_2[new_name] = feature
 
     main_features = features_1

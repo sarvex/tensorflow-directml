@@ -52,15 +52,12 @@ _DNN_LEARNING_RATE = 0.001
 
 
 def _get_optimizer(optimizer):
-  if callable(optimizer):
-    return optimizer()
-  else:
-    return optimizer
+  return optimizer() if callable(optimizer) else optimizer
 
 
 def _add_hidden_layer_summary(value, tag):
-  summary.scalar("%s_fraction_of_zero_values" % tag, nn.zero_fraction(value))
-  summary.histogram("%s_activation" % tag, value)
+  summary.scalar(f"{tag}_fraction_of_zero_values", nn.zero_fraction(value))
+  summary.histogram(f"{tag}_activation", value)
 
 
 def _dnn_tree_combined_model_fn(
@@ -154,11 +151,10 @@ def _dnn_tree_combined_model_fn(
   if not dnn_feature_columns:
     raise ValueError("dnn_feature_columns must be specified")
 
-  if dnn_to_tree_distillation_param:
-    if not predict_with_tree_only:
-      logging.warning("update predict_with_tree_only to True since distillation"
-                      "is specified.")
-      predict_with_tree_only = True
+  if dnn_to_tree_distillation_param and not predict_with_tree_only:
+    logging.warning("update predict_with_tree_only to True since distillation"
+                    "is specified.")
+    predict_with_tree_only = True
 
   # Build DNN Logits.
   dnn_parent_scope = "dnn"
@@ -302,7 +298,7 @@ def _dnn_tree_combined_model_fn(
         return update_op
 
   if predict_with_tree_only:
-    if mode == model_fn.ModeKeys.TRAIN or mode == model_fn.ModeKeys.INFER:
+    if mode in [model_fn.ModeKeys.TRAIN, model_fn.ModeKeys.INFER]:
       tree_train_logits = tree_logits
     else:
       tree_train_logits = control_flow_ops.cond(

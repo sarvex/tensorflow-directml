@@ -44,8 +44,8 @@ def _export_outputs_to_output_alternatives(export_outputs):
   Returns:
     converted output_alternatives.
   """
-  output = {}
   if export_outputs is not None:
+    output = {}
     for key, value in export_outputs.items():
       if isinstance(value, export_output.ClassificationOutput):
         exported_predictions = {

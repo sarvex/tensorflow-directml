@@ -56,11 +56,11 @@ def copy_variable_to_graph(org_instance, to_graph, scope=''):
   """
 
   if not isinstance(org_instance, VariableV1):
-    raise TypeError(str(org_instance) + ' is not a Variable')
+    raise TypeError(f'{str(org_instance)} is not a Variable')
 
   #The name of the new variable
   if scope != '':
-    new_name = (scope + '/' + org_instance.name[:org_instance.name.index(':')])
+    new_name = f'{scope}/' + org_instance.name[:org_instance.name.index(':')]
   else:
     new_name = org_instance.name[:org_instance.name.index(':')]
 
@@ -75,7 +75,7 @@ def copy_variable_to_graph(org_instance, to_graph, scope=''):
           name == ops.GraphKeys.TRAINABLE_VARIABLES or scope == ''):
         collections.append(name)
       else:
-        collections.append(scope + '/' + name)
+        collections.append(f'{scope}/{name}')
 
   #See if it's trainable.
   trainable = (
@@ -127,13 +127,9 @@ def copy_op_to_graph(org_instance, to_graph, variables, scope=''):
   """
 
   #The name of the new instance
-  if scope != '':
-    new_name = scope + '/' + org_instance.name
-  else:
-    new_name = org_instance.name
-
+  new_name = f'{scope}/{org_instance.name}' if scope != '' else org_instance.name
   #Extract names of variables
-  copied_variables = dict((x.name, x) for x in variables)
+  copied_variables = {x.name: x for x in variables}
 
   #If a variable by the new name already exists, return the
   #correspondng tensor that will act as an input
@@ -142,9 +138,9 @@ def copy_op_to_graph(org_instance, to_graph, variables, scope=''):
 
   #If an instance of the same name exists, return appropriately
   try:
-    already_present = to_graph.as_graph_element(
-        new_name, allow_tensor=True, allow_operation=True)
-    return already_present
+    return to_graph.as_graph_element(new_name,
+                                     allow_tensor=True,
+                                     allow_operation=True)
   except:
     pass
 
@@ -156,7 +152,7 @@ def copy_op_to_graph(org_instance, to_graph, variables, scope=''):
       if scope == '':
         collections.append(name)
       else:
-        collections.append(scope + '/' + name)
+        collections.append(f'{scope}/{name}')
 
   #Take action based on the class of the instance
 
@@ -227,7 +223,7 @@ def copy_op_to_graph(org_instance, to_graph, variables, scope=''):
     return new_op
 
   else:
-    raise TypeError('Could not copy instance: ' + str(org_instance))
+    raise TypeError(f'Could not copy instance: {str(org_instance)}')
 
 
 def get_copied_op(org_instance, graph, scope=''):
@@ -248,10 +244,6 @@ def get_copied_op(org_instance, graph, scope=''):
   """
 
   #The name of the copied instance
-  if scope != '':
-    new_name = scope + '/' + org_instance.name
-  else:
-    new_name = org_instance.name
-
+  new_name = f'{scope}/{org_instance.name}' if scope != '' else org_instance.name
   return graph.as_graph_element(
       new_name, allow_tensor=True, allow_operation=True)

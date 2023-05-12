@@ -68,19 +68,21 @@ class UniqueNameTrackerTests(test.TestCase):
 
   @test_util.run_in_graph_and_eager_modes
   def testExample(self):
+
+
+
     class SlotManager(tracking.AutoTrackable):
 
       def __init__(self):
         self.slotdeps = containers.UniqueNameTracker()
         slotdeps = self.slotdeps
-        slots = []
-        slots.append(slotdeps.track(
-            resource_variable_ops.ResourceVariable(3.), "x"))
+        slots = [slotdeps.track(resource_variable_ops.ResourceVariable(3.), "x")]
         slots.append(slotdeps.track(
             resource_variable_ops.ResourceVariable(4.), "y"))
         slots.append(slotdeps.track(
             resource_variable_ops.ResourceVariable(5.), "x"))
         self.slots = data_structures.NoDependency(slots)
+
 
     manager = SlotManager()
     self.evaluate([v.initializer for v in manager.slots])
@@ -91,8 +93,7 @@ class UniqueNameTrackerTests(test.TestCase):
     metadata = util.object_metadata(save_path)
     dependency_names = []
     for node in metadata.nodes:
-      for child in node.children:
-        dependency_names.append(child.local_name)
+      dependency_names.extend(child.local_name for child in node.children)
     six.assertCountEqual(
         self,
         dependency_names,

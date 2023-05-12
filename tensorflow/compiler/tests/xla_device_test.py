@@ -51,11 +51,20 @@ class XlaDeviceTest(xla_test.XLATestCase):
 
   def testCopiesOfUnsupportedTypesFailGracefully(self):
     """Tests that copies of unsupported types don't crash."""
-    test_types = set([
-        np.uint8, np.uint16, np.uint32, np.uint64, np.int8, np.int16, np.int32,
-        np.int64, np.float16, np.float32, np.float16,
-        dtypes.bfloat16.as_numpy_dtype
-    ])
+    test_types = {
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+        np.float16,
+        np.float32,
+        np.float16,
+        dtypes.bfloat16.as_numpy_dtype,
+    }
     shape = (10, 10)
     for unsupported_dtype in test_types - self.all_types:
       with self.session() as sess:

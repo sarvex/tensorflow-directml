@@ -59,8 +59,7 @@ def _get_estimator(output_dir, feature_cols):
 
   run_config = tf.contrib.learn.RunConfig(save_summary_steps=1)
 
-  # Create a DNNBoostedTreeCombinedRegressor estimator.
-  estimator = DNNBoostedTreeCombinedRegressor(
+  return DNNBoostedTreeCombinedRegressor(
       dnn_hidden_units=[int(x) for x in FLAGS.dnn_hidden_units.split(",")],
       dnn_feature_columns=feature_cols,
       tree_learner_config=learner_config,
@@ -71,8 +70,8 @@ def _get_estimator(output_dir, feature_cols):
       model_dir=output_dir,
       config=run_config,
       dnn_input_layer_to_tree=True,
-      dnn_steps_to_train=FLAGS.dnn_steps_to_train)
-  return estimator
+      dnn_steps_to_train=FLAGS.dnn_steps_to_train,
+  )
 
 
 def _make_experiment_fn(output_dir):

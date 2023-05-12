@@ -69,10 +69,7 @@ class UniqueNameTracker(data_structures.TrackableDataStructure):
            "from tf.track.Trackable.") % (trackable,))
 
     def _format_name(prefix, number):
-      if number > 0:
-        return "%s_%d" % (prefix, number)
-      else:
-        return prefix
+      return "%s_%d" % (prefix, number) if number > 0 else prefix
 
     count = self._name_counts.get(base_name, 0)
     candidate = _format_name(base_name, count)

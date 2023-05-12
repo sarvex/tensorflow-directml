@@ -30,16 +30,15 @@ from tensorflow.python.ops.batch_ops import unbatch
 @ops.RegisterGradient("Batch")
 def _BatchGrad(op, *out_grads):  # pylint: disable=invalid-name
   """Gradient for batch op."""
-  gradients = []
-  for i in range(len(op.inputs)):
-    gradients.append(
-        gen_batch_ops.unbatch(
-            out_grads[i],
-            op.outputs[-2],
-            op.outputs[-1],
-            timeout_micros=op.get_attr("grad_timeout_micros"),
-            shared_name="batch_gradient_{}_{}".format(op.name, i)))
-  return gradients
+  return [
+      gen_batch_ops.unbatch(
+          out_grads[i],
+          op.outputs[-2],
+          op.outputs[-1],
+          timeout_micros=op.get_attr("grad_timeout_micros"),
+          shared_name=f"batch_gradient_{op.name}_{i}",
+      ) for i in range(len(op.inputs))
+  ]
 
 
 @ops.RegisterGradient("Unbatch")
@@ -50,7 +49,10 @@ def _UnbatchGrad(op, grad):   # pylint: disable=invalid-name
           op.inputs[1],
           grad,
           op.inputs[2],
-          shared_name="unbatch_gradient_{}".format(op.name)), None, None
+          shared_name=f"unbatch_gradient_{op.name}",
+      ),
+      None,
+      None,
   ]
 
 
@@ -85,7 +87,7 @@ def batch_function_v1(num_batch_threads,
   Returns:
     The decorated function will return the unbatched computation output Tensors.
   """
-  def decorator(f):  # pylint: disable=missing-docstring
+  def decorator(f):# pylint: disable=missing-docstring
     def decorated(*args):
       with ops.name_scope("batch") as name:
         for a in args:
@@ -103,18 +105,19 @@ def batch_function_v1(num_batch_threads,
             grad_timeout_micros=grad_timeout_micros,
             shared_name=name)
         outputs = f(*batched_tensors)
-        if isinstance(outputs, ops.Tensor):
-          outputs_list = [outputs]
-        else:
-          outputs_list = outputs
+        outputs_list = [outputs] if isinstance(outputs, ops.Tensor) else outputs
         with ops.name_scope("unbatch") as unbatch_name:
           unbatched = [
-              gen_batch_ops.unbatch(t, batch_index, id_t,
-                                    timeout_micros=unbatch_timeout_micros,
-                                    shared_name=unbatch_name + "/" + t.name)
-              for t in outputs_list]
-        if isinstance(outputs, ops.Tensor):
-          return unbatched[0]
-        return unbatched
+              gen_batch_ops.unbatch(
+                  t,
+                  batch_index,
+                  id_t,
+                  timeout_micros=unbatch_timeout_micros,
+                  shared_name=f"{unbatch_name}/{t.name}",
+              ) for t in outputs_list
+          ]
+        return unbatched[0] if isinstance(outputs, ops.Tensor) else unbatched
+
     return decorated
+
   return decorator

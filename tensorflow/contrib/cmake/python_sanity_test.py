@@ -64,7 +64,7 @@ def read_entries(test):
 def test_invalid_directories(test):
   for entry in test.entries:
     if not os.path.isdir(abs_path(entry)):
-      problem = "'" + test.entries_file + "' contains invalid '" + entry + "'"
+      problem = f"'{test.entries_file}' contains invalid '{entry}'"
       solution = ("Please remove the invalid entry (or add the missing "
                   "directory).")
       raise AssertionError(problem + "\n" + solution)
@@ -78,7 +78,7 @@ def test_missing_directory(test, path):
   entry_exists = path in test.entries
 
   if dir_exists and not entry_exists:
-    problem = "'" + test.entries_file + "' is missing '" + path + "'"
+    problem = f"'{test.entries_file}' is missing '{path}'"
     solution = "Please add the missing entry (comment to whitelist if needed)."
     raise AssertionError(problem + "\n" + solution)
 
@@ -96,12 +96,12 @@ class PythonModuleTest(unittest.TestCase):
     module_names = next(os.walk(abs_path("tensorflow/contrib")))[1]
 
     for module_name in module_names:
-      path = "tensorflow/contrib/" + module_name
+      path = f"tensorflow/contrib/{module_name}"
 
-      test_missing_directory(self, path + "/python")
-      test_missing_directory(self, path + "/python/ops")
-      test_missing_directory(self, path + "/python/kernels")
-      test_missing_directory(self, path + "/python/layers")
+      test_missing_directory(self, f"{path}/python")
+      test_missing_directory(self, f"{path}/python/ops")
+      test_missing_directory(self, f"{path}/python/kernels")
+      test_missing_directory(self, f"{path}/python/layers")
 
 
 class PythonProtoTest(unittest.TestCase):

@@ -62,7 +62,7 @@ class _LazyLoader(_types.ModuleType):
 # and then registering it to sys.modules using the old path
 def _forward_module(old_name):
   parts = old_name.split(".")
-  parts[0] = parts[0] + "_core"
+  parts[0] = f"{parts[0]}_core"
   local_name = parts[-1]
   existing_name = ".".join(parts)
   _module = _LazyLoader(local_name, globals(), existing_name)

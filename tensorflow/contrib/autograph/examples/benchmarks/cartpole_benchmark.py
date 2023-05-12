@@ -433,7 +433,7 @@ def graph_demo_training():
       sess.run(tf.local_variables_initializer())
       steps_per_iteration = sess.run(train_ops)
       for i, steps in enumerate(steps_per_iteration):
-        print('Step {} iterations: {}'.format(i, steps))
+        print(f'Step {i} iterations: {steps}')
 
 
 def eager_demo_training():
@@ -445,7 +445,7 @@ def eager_demo_training():
 
     steps_per_iteration = eager_train_model(network, env, opt, iterations=5)
     for i, steps in enumerate(steps_per_iteration):
-      print('Step {} iterations: {}'.format(i, steps))
+      print(f'Step {i} iterations: {steps}')
 
 
 class RLCartPoleBenchmark(benchmark_base.ReportingBenchmark):

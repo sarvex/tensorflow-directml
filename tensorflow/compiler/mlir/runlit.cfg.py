@@ -13,6 +13,7 @@
 # limitations under the License.
 """Lit runner configuration."""
 
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -30,7 +31,7 @@ from lit.llvm.subst import ToolSubst
 # Configuration file for the 'lit' test runner.
 
 # name: The name of this test suite.
-config.name = 'MLIR ' + os.path.basename(config.mlir_test_dir)
+config.name = f'MLIR {os.path.basename(config.mlir_test_dir)}'
 
 config.test_format = lit.formats.ShTest(not llvm_config.use_lit_shell)
 

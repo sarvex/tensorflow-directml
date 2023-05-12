@@ -94,7 +94,7 @@ class CudnnTestModel(object):
                kernel_initializer=None,
                bias_initializer=None):
     if dtype not in (dtypes.float16, dtypes.float32, dtypes.float64):
-      raise ValueError("Invalid dtype: %s" % dtype)
+      raise ValueError(f"Invalid dtype: {dtype}")
     self._dtype = dtype
 
     self._inputs = array_ops.placeholder(
@@ -116,7 +116,7 @@ class CudnnTestModel(object):
       model_fn = cudnn_rnn.CudnnRNNRelu
       self._initial_state = (h,)
     else:
-      raise ValueError("Invalid rnn_mode: %s" % rnn_mode)
+      raise ValueError(f"Invalid rnn_mode: {rnn_mode}")
     self._rnn = model_fn(
         num_layers,
         num_units,
@@ -193,10 +193,9 @@ class CudnnTestModel(object):
     if self._rnn.rnn_mode == CUDNN_LSTM:
       input_c = np.zeros((num_layers * dir_count, batch_size,
                           num_units)).astype(np_dtype)
-      initial_state = (input_h, input_c)
+      return input_h, input_c
     else:
-      initial_state = (input_h,)
-    return initial_state
+      return (input_h,)
 
   def FProp(self, inputs_t, initial_state_t, training):
     """Builds additional subgraph with given inputs and state.
@@ -245,7 +244,7 @@ def _CreateCudnnCompatibleCanonicalRNN(rnn, inputs, is_bidi=False, scope=None):
     single_cell = (
         lambda: rnn_cell_impl.BasicRNNCell(num_units, gen_nn_ops.relu))
   else:
-    raise ValueError("%s is not supported!" % mode)
+    raise ValueError(f"{mode} is not supported!")
 
   if not is_bidi:
     cell = rnn_cell_impl.MultiRNNCell(
@@ -340,7 +339,7 @@ class CudnnRNNTestBasic(test_util.TensorFlowTestCase):
     elif opt == "sgd":
       return gradient_descent.GradientDescentOptimizer(learning_rate=1e-2)
     else:
-      raise ValueError("Unsupported optimizer: %s" % opt)
+      raise ValueError(f"Unsupported optimizer: {opt}")
 
   def _TestOptimizerSupportHelper(self, opt):
     num_layers = 4
@@ -379,10 +378,7 @@ class CudnnRNNTestBasic(test_util.TensorFlowTestCase):
     dir_count = 1
 
     def DeviceFn(op):
-      if op.type in ("Variable", "VariableV2"):
-        return "/cpu:0"
-      else:
-        return "/gpu:0"
+      return "/cpu:0" if op.type in ("Variable", "VariableV2") else "/gpu:0"
 
     with ops.Graph().as_default() as g:
       with ops.device(DeviceFn):
@@ -511,10 +507,8 @@ class CudnnRNNTestSaveRestore(test_util.TensorFlowTestCase):
     self.assertEqual(len(lf_rhs), len(rt_rhs))
 
     sum_lhs, sum_rhs = [], []
-    for lf, rt in zip(lf_lhs, rt_lhs):
-      sum_lhs.append(lf + rt)
-    for lf, rt in zip(lf_rhs, rt_rhs):
-      sum_rhs.append(lf + rt)
+    sum_lhs.extend(lf + rt for lf, rt in zip(lf_lhs, rt_lhs))
+    sum_rhs.extend(lf + rt for lf, rt in zip(lf_rhs, rt_rhs))
     self.assertEqual(len(sum_lhs), len(sum_rhs))
     for lf, rt in zip(sum_lhs, sum_rhs):
       self.assertAllEqual(lf, rt)
@@ -946,8 +940,7 @@ class CudnnRNNTestCompatibleRNNCells(test_util.TensorFlowTestCase):
               })
           seed += 1
 
-        save_path = os.path.join(self.get_temp_dir(),
-                                 ("cudnn-rnn-%s-test" % rnn_mode))
+        save_path = os.path.join(self.get_temp_dir(), f"cudnn-rnn-{rnn_mode}-test")
         save_v = saver.save(sess, save_path)
         self.assertEqual(save_path, save_v)
 
@@ -985,7 +978,7 @@ class CudnnRNNTestCompatibleRNNCells(test_util.TensorFlowTestCase):
           output_h = array_ops.stack([s.h for s in states])
           output_c = array_ops.stack([s.c for s in states])
         else:
-          output_state = array_ops.stack([s for s in states])
+          output_state = array_ops.stack(list(states))
       else:
         # outputs is one tensor.
         # states is a tuple of 2 tuples:
@@ -1001,9 +994,10 @@ class CudnnRNNTestCompatibleRNNCells(test_util.TensorFlowTestCase):
           output_h = array_ops.concat(output_h, axis=0)
           output_c = array_ops.concat(output_c, axis=0)
         else:
-          output_state = []
-          for s_fw, s_bw in zip(output_state_fw, output_state_bw):
-            output_state.append(array_ops.stack([s_fw, s_bw]))
+          output_state = [
+              array_ops.stack([s_fw, s_bw])
+              for s_fw, s_bw in zip(output_state_fw, output_state_bw)
+          ]
           output_state = array_ops.concat(output_state, axis=0)
       saver = saver_lib.Saver()
 
@@ -1171,9 +1165,10 @@ class CudnnRNNTestTraining(test_util.TensorFlowTestCase):
       delta_xs = [delta * np.random.rand(*shape.tolist())
                   for shape in xs_shapes]
 
-      feed_dict = {}
-      for x, x_val, delta_x in zip(xs, x_vals, delta_xs):
-        feed_dict[x] = x_val + delta_x
+      feed_dict = {
+          x: x_val + delta_x
+          for x, x_val, delta_x in zip(xs, x_vals, delta_xs)
+      }
       actual_delta_y = (float(sess.run(y, feed_dict=feed_dict)) -
                         float(sess.run(y)))
 
@@ -1213,10 +1208,7 @@ class CudnnRNNTestTraining(test_util.TensorFlowTestCase):
     has_input_c = (rnn_mode == CUDNN_LSTM)
     direction = (CUDNN_RNN_UNIDIRECTION
                  if dir_count == 1 else CUDNN_RNN_BIDIRECTION)
-    if use_v2:
-      os.environ["TF_CUDNN_RNN_USE_V2"] = "1"
-    else:
-      os.environ["TF_CUDNN_RNN_USE_V2"] = "0"
+    os.environ["TF_CUDNN_RNN_USE_V2"] = "1" if use_v2 else "0"
     model = CudnnTestModel(
         rnn_mode,
         num_layers,
@@ -1252,8 +1244,7 @@ class CudnnRNNTestTraining(test_util.TensorFlowTestCase):
     with self.test_session(use_gpu=True, graph=ops.get_default_graph()) as sess:
       sess.run(variables.global_variables_initializer())
       all_inputs = [inputs, params]
-      for s in initial_state:
-        all_inputs.append(s)
+      all_inputs.extend(iter(initial_state))
       if dtype == dtypes.float16:
         self._GradientCheckFp16(
             sess, total_sum, all_inputs,

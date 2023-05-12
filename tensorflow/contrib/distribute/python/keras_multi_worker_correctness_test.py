@@ -48,8 +48,7 @@ LSTM_TARGETS = np.random.normal(0, 0.1, (6400, 1)).astype(np.float32)
 
 def get_num_workers():
   cluster_resolver = TFConfigClusterResolver()
-  cluster_spec = cluster_resolver.cluster_spec().as_dict()
-  if cluster_spec:
+  if cluster_spec := cluster_resolver.cluster_spec().as_dict():
     task_type = cluster_resolver.task_type
     return int(multi_worker_util.worker_count(cluster_spec, task_type))
   return 1

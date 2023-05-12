@@ -142,8 +142,7 @@ class AdjustContrastTest(xla_test.XLATestCase):
 
   def _adjustContrastNp(self, x_np, contrast_factor):
     mean = np.mean(x_np, (1, 2), keepdims=True)
-    y_np = mean + contrast_factor * (x_np - mean)
-    return y_np
+    return mean + contrast_factor * (x_np - mean)
 
   def _adjustContrastTf(self, x_np, contrast_factor):
     with self.session():
@@ -272,17 +271,17 @@ class AdjustHueTest(xla_test.XLATestCase):
         delta_h = np.random.rand() * 2.0 - 1.0
         if test_style == "all_random":
           pass
-        elif test_style == "rg_same":
-          x_np[..., 1] = x_np[..., 0]
-        elif test_style == "rb_same":
-          x_np[..., 2] = x_np[..., 0]
         elif test_style == "gb_same":
           x_np[..., 2] = x_np[..., 1]
+        elif test_style == "rb_same":
+          x_np[..., 2] = x_np[..., 0]
+        elif test_style == "rg_same":
+          x_np[..., 1] = x_np[..., 0]
         elif test_style == "rgb_same":
           x_np[..., 1] = x_np[..., 0]
           x_np[..., 2] = x_np[..., 0]
         else:
-          raise AssertionError("Invalid test style: %s" % (test_style))
+          raise AssertionError(f"Invalid test style: {test_style}")
         y_np = self._adjustHueNp(x_np, delta_h)
         y_tf = self._adjustHueTf(x_np, delta_h)
         self.assertAllClose(y_tf, y_np, rtol=2e-5, atol=1e-4)
@@ -385,17 +384,17 @@ class AdjustSaturationTest(xla_test.XLATestCase):
           scale = np.random.rand()
           if test_style == "all_random":
             pass
-          elif test_style == "rg_same":
-            x_np[..., 1] = x_np[..., 0]
-          elif test_style == "rb_same":
-            x_np[..., 2] = x_np[..., 0]
           elif test_style == "gb_same":
             x_np[..., 2] = x_np[..., 1]
+          elif test_style == "rb_same":
+            x_np[..., 2] = x_np[..., 0]
+          elif test_style == "rg_same":
+            x_np[..., 1] = x_np[..., 0]
           elif test_style == "rgb_same":
             x_np[..., 1] = x_np[..., 0]
             x_np[..., 2] = x_np[..., 0]
           else:
-            raise AssertionError("Invalid test style: %s" % (test_style))
+            raise AssertionError(f"Invalid test style: {test_style}")
           y_baseline = self._adjustSaturationNp(x_np, scale)
           x = array_ops.placeholder(dtypes.float32, shape=x_shape)
           with self.test_scope():

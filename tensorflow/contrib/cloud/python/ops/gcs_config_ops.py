@@ -79,9 +79,7 @@ class ConfigureGcsHook(training.SessionRunHook):
   """
 
   def _verify_dictionary(self, creds_dict):
-    if 'refresh_token' in creds_dict or 'private_key' in creds_dict:
-      return True
-    return False
+    return 'refresh_token' in creds_dict or 'private_key' in creds_dict
 
   def __init__(self, credentials=None, block_cache=None):
     """Constructs a ConfigureGcsHook.

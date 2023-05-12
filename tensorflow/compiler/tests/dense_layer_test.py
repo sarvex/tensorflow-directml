@@ -35,8 +35,7 @@ def GetRunMetadataLabels(run_metadata):
   """Returns all labels in run_metadata."""
   labels = []
   for dev_stats in run_metadata.step_stats.dev_stats:
-    for node_stats in dev_stats.node_stats:
-      labels.append(node_stats.timeline_label)
+    labels.extend(node_stats.timeline_label for node_stats in dev_stats.node_stats)
   return labels
 
 

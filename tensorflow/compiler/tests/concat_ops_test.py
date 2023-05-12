@@ -84,13 +84,10 @@ class ConcatTest(xla_test.XLATestCase):
     # Random dim to concat on
     concat_dim = np.random.randint(5)
     params = {}
-    if dtype == dtypes.bfloat16:
-      dtype_feed = dtypes.float32
-    else:
-      dtype_feed = dtype
+    dtype_feed = dtypes.float32 if dtype == dtypes.bfloat16 else dtype
     with self.session():
       p = []
-      for i in np.arange(num_tensors):
+      for _ in np.arange(num_tensors):
         input_shape = shape
         input_shape[concat_dim] = np.random.randint(1, 5)
         placeholder = array_ops.placeholder(dtype_feed, shape=input_shape)
@@ -299,12 +296,12 @@ class ConcatTest(xla_test.XLATestCase):
                     "other backends to catch this specific error.")
     with self.session():
       with self.test_scope():
+        num_tensors = 1001
         for concat_dim in range(2):
           params = {}
           p = []
           shape = np.array([7, 13])
-          num_tensors = 1001
-          for i in np.arange(num_tensors):
+          for _ in np.arange(num_tensors):
             input_shape = shape
             placeholder = array_ops.placeholder(
                 dtypes.float32, shape=input_shape)

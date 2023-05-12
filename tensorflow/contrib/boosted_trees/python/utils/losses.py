@@ -225,8 +225,9 @@ def per_example_exp_loss(labels, weights, predictions, name=None, eps=0.1):
       try:
         labels.get_shape().merge_with(logits.get_shape())
       except ValueError:
-        raise ValueError("logits and labels must have the same shape (%s vs %s)"
-                         % (logits.get_shape(), labels.get_shape()))
+        raise ValueError(
+            f"logits and labels must have the same shape ({logits.get_shape()} vs {labels.get_shape()})"
+        )
 
     # Default threshold to switch between classes
     zeros = array_ops.zeros_like(logits, dtype=logits.dtype)
@@ -299,8 +300,9 @@ def per_example_full_exp_loss(labels, weights, predictions, name=None):
       try:
         labels.get_shape().merge_with(logits.get_shape())
       except ValueError:
-        raise ValueError("logits and labels must have the same shape (%s vs %s)"
-                         % (logits.get_shape(), labels.get_shape()))
+        raise ValueError(
+            f"logits and labels must have the same shape ({logits.get_shape()} vs {labels.get_shape()})"
+        )
 
     # Default threshold of 0 to switch between classes
     zeros = array_ops.zeros_like(logits, dtype=logits.dtype)

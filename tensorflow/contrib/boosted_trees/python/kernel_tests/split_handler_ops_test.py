@@ -423,7 +423,7 @@ class SplitHandlerOpsTest(test_util.TensorFlowTestCase):
             [0] * (n_buckets + 1), dtype=dtypes.int32)
         # We have only 1 dimension in our sparse feature column.
 
-        bucket_ids = [-1] + [n for n in range(100)]
+        bucket_ids = [-1] + list(range(100))
         bucket_ids = array_ops.constant(bucket_ids, dtype=dtypes.int64)
         dimension_ids = array_ops.constant(
             [0] * (n_buckets + 1), dtype=dtypes.int64)

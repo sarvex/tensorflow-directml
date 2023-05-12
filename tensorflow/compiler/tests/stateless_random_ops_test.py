@@ -76,10 +76,10 @@ class StatelessRandomOpsTest(xla_test.XLATestCase):
 
   def testDistributionOfStatelessRandomUniform(self):
     """Use Pearson's Chi-squared test to test for uniformity."""
-    with self.session() as sess, self.test_scope():
+    with (self.session() as sess, self.test_scope()):
+      n = 1000
       for dtype in self._random_types(include_int=True):
         seed_t = array_ops.placeholder(dtypes.int32, shape=[2])
-        n = 1000
         maxval = 1
         if dtype.is_integer:
           maxval = 100
@@ -106,10 +106,10 @@ class StatelessRandomOpsTest(xla_test.XLATestCase):
 
   def testDistributionOfStatelessRandomNormal(self):
     """Use Anderson-Darling test to test distribution appears normal."""
-    with self.session() as sess, self.test_scope():
+    with (self.session() as sess, self.test_scope()):
+      n = 1000
       for dtype in self._random_types():
         seed_t = array_ops.placeholder(dtypes.int32, shape=[2])
-        n = 1000
         x = stateless.stateless_random_normal(
             shape=[n], seed=seed_t, dtype=dtype)
         y = sess.run(x, {seed_t: [25252, 314159]})

@@ -129,10 +129,7 @@ def _find_best_candidate_distribution_helper(objective_vector,
   # Go-style error reporting. We don't raise on error, since
   # find_best_candidate_distribution() needs to handle the failure case, and we
   # shouldn't use exceptions as flow-control.
-  if not result.success:
-    return (None, result.message)
-  else:
-    return (result.x, None)
+  return (None, result.message) if not result.success else (result.x, None)
 
 
 def find_best_candidate_distribution(objective_vector,
@@ -209,14 +206,13 @@ def find_best_candidate_distribution(objective_vector,
     middle = 0.5 * (lower + upper)
     if (middle - lower <= epsilon) or (upper - middle <= epsilon):
       break
+    pp, _ = _find_best_candidate_distribution_helper(
+        objective_vector, constraints_matrix, maximum_violation=middle)
+    if pp is None:
+      lower = middle
     else:
-      pp, _ = _find_best_candidate_distribution_helper(
-          objective_vector, constraints_matrix, maximum_violation=middle)
-      if pp is None:
-        lower = middle
-      else:
-        best_pp = pp
-        upper = middle
+      best_pp = pp
+      upper = middle
 
   return best_pp
 

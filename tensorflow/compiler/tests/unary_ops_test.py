@@ -35,13 +35,13 @@ from tensorflow.python.platform import googletest
 
 def nhwc_to_format(x, data_format):
   """Converts a numpy array from NHWC format to `data_format`."""
-  rank = len(x.shape)
   if data_format == "NCHW":
+    rank = len(x.shape)
     return np.transpose(x, [0, rank - 1] + list(range(1, rank - 1)))
   elif data_format == "NHWC":
     return x
   else:
-    raise ValueError("Unknown format {}".format(data_format))
+    raise ValueError(f"Unknown format {data_format}")
 
 
 class UnaryOpsTest(xla_test.XLATestCase):
@@ -753,9 +753,7 @@ class UnaryOpsTest(xla_test.XLATestCase):
 
   def testCast(self):
     shapes = [[], [4], [2, 3], [2, 0, 4]]
-    types = (
-        set([dtypes.bool, dtypes.int32, dtypes.float32])
-        | self.complex_tf_types)
+    types = ({dtypes.bool, dtypes.int32, dtypes.float32} | self.complex_tf_types)
     for shape in shapes:
       for src_type in types:
         for dst_type in types:

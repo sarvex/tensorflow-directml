@@ -43,9 +43,9 @@ from tensorflow.python.platform import googletest
 
 def _squared_loss(label, unused_weights, predictions):
   """Unweighted loss implementation."""
-  loss = math_ops.reduce_sum(
-      math_ops.squared_difference(predictions, label), 1, keepdims=True)
-  return loss
+  return math_ops.reduce_sum(math_ops.squared_difference(predictions, label),
+                             1,
+                             keepdims=True)
 
 
 def _append_to_leaf(leaf, c_id, w):
@@ -88,8 +88,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
   def testExtractFeatures(self):
     """Tests feature extraction."""
     with self.cached_session():
-      features = {}
-      features["dense_float"] = array_ops.zeros([2, 1], dtypes.float32)
+      features = {"dense_float": array_ops.zeros([2, 1], dtypes.float32)}
       features["sparse_float"] = sparse_tensor.SparseTensor(
           array_ops.zeros([2, 2], dtypes.int64),
           array_ops.zeros([2], dtypes.float32),
@@ -130,8 +129,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
   def testExtractFeaturesWithTransformation(self):
     """Tests feature extraction."""
     with self.cached_session():
-      features = {}
-      features["dense_float"] = array_ops.zeros([2, 1], dtypes.float32)
+      features = {"dense_float": array_ops.zeros([2, 1], dtypes.float32)}
       features["sparse_float"] = sparse_tensor.SparseTensor(
           array_ops.zeros([2, 2], dtypes.int64),
           array_ops.zeros([2], dtypes.float32),
@@ -140,8 +138,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
           array_ops.zeros([2, 2], dtypes.int64),
           array_ops.zeros([2], dtypes.string), array_ops.zeros([2],
                                                                dtypes.int64))
-      feature_columns = set()
-      feature_columns.add(layers.real_valued_column("dense_float"))
+      feature_columns = {layers.real_valued_column("dense_float")}
       feature_columns.add(
           layers.feature_column._real_valued_var_len_column(
               "sparse_float", is_sparse=True))
@@ -180,14 +177,12 @@ class GbdtTest(test_util.TensorFlowTestCase):
   def testExtractFeaturesFromV2FeatureColumns(self):
     """Tests feature extraction when using v2 columns."""
     with self.cached_session():
-      features = {}
-      features["dense_float"] = array_ops.zeros([2, 1], dtypes.float32)
+      features = {"dense_float": array_ops.zeros([2, 1], dtypes.float32)}
       features["sparse_categorical"] = sparse_tensor.SparseTensor(
           array_ops.zeros([2, 2], dtypes.int64),
           array_ops.zeros([2], dtypes.string), array_ops.zeros([2],
                                                                dtypes.int64))
-      feature_columns = set()
-      feature_columns.add(feature_column_v2.numeric_column("dense_float"))
+      feature_columns = {feature_column_v2.numeric_column("dense_float")}
       feature_columns.add(
           feature_column_v2.categorical_column_with_hash_bucket(
               "sparse_categorical", hash_bucket_size=1000000))
@@ -212,17 +207,13 @@ class GbdtTest(test_util.TensorFlowTestCase):
   def testExtractFeaturesFromCoreFeatureColumns(self):
     """Tests feature extraction when using core columns."""
     with self.cached_session():
-      features = {}
-      # Sparse float column does not exist in core, so only dense numeric and
-      # categorical.
-      features["dense_float"] = array_ops.zeros([2, 1], dtypes.float32)
+      features = {"dense_float": array_ops.zeros([2, 1], dtypes.float32)}
       features["sparse_categorical"] = sparse_tensor.SparseTensor(
           array_ops.zeros([2, 2], dtypes.int64),
           array_ops.zeros([2], dtypes.string), array_ops.zeros([2],
                                                                dtypes.int64))
 
-      feature_columns = set()
-      feature_columns.add(core_feature_column.numeric_column("dense_float"))
+      feature_columns = {core_feature_column.numeric_column("dense_float")}
       feature_columns.add(
           core_feature_column.categorical_column_with_hash_bucket(
               "sparse_categorical", hash_bucket_size=1000000))
@@ -256,9 +247,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
       learner_config.regularization.l2 = 0
       learner_config.constraints.max_tree_depth = 1
       learner_config.constraints.min_node_weight = 0
-      features = {}
-      features["dense_float"] = array_ops.ones([4, 1], dtypes.float32)
-
+      features = {"dense_float": array_ops.ones([4, 1], dtypes.float32)}
       gbdt_model = gbdt_batch.GradientBoostedDecisionTreeModel(
           is_chief=True,
           num_ps_replicas=0,
@@ -363,10 +352,10 @@ class GbdtTest(test_util.TensorFlowTestCase):
           learner_pb2.LearnerConfig.OBLIVIOUS_DECISION_TREE)
       learner_config.pruning_mode = learner_pb2.LearnerConfig.PRE_PRUNE
       learner_config.growing_mode = learner_pb2.LearnerConfig.LAYER_BY_LAYER
-      features = {}
-      features["dense_float"] = array_ops.constant([[-2], [-1], [1], [2]],
-                                                   dtypes.float32)
-
+      features = {
+          "dense_float": array_ops.constant([[-2], [-1], [1], [2]],
+                                            dtypes.float32)
+      }
       gbdt_model = gbdt_batch.GradientBoostedDecisionTreeModel(
           is_chief=True,
           num_ps_replicas=0,
@@ -516,8 +505,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
       learner_config.regularization.l2 = 0
       learner_config.constraints.max_tree_depth = 1
       learner_config.constraints.min_node_weight = 0
-      features = {}
-      features["dense_float"] = array_ops.ones([4, 1], dtypes.float32)
+      features = {"dense_float": array_ops.ones([4, 1], dtypes.float32)}
       features["sparse_float"] = sparse_tensor.SparseTensor(
           array_ops.zeros([2, 2], dtypes.int64),
           array_ops.zeros([2], dtypes.float32),
@@ -625,8 +613,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
       learner_config.constraints.min_node_weight = 0
       num_examples_fn = (
           lambda layer: math_ops.pow(math_ops.cast(2, dtypes.int64), layer) * 1)
-      features = {}
-      features["dense_float"] = array_ops.ones([4, 1], dtypes.float32)
+      features = {"dense_float": array_ops.ones([4, 1], dtypes.float32)}
       gbdt_model = gbdt_batch.GradientBoostedDecisionTreeModel(
           is_chief=True,
           num_ps_replicas=0,
@@ -728,9 +715,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
       learner_config.regularization.l2 = 0
       learner_config.constraints.max_tree_depth = 1
       learner_config.constraints.min_node_weight = 0
-      features = {}
-      features["dense_float"] = array_ops.ones([4, 1], dtypes.float32)
-
+      features = {"dense_float": array_ops.ones([4, 1], dtypes.float32)}
       gbdt_model = gbdt_batch.GradientBoostedDecisionTreeModel(
           is_chief=True,
           num_ps_replicas=0,
@@ -800,9 +785,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
       learner_config.regularization.l2 = 0
       learner_config.constraints.max_tree_depth = 1
       learner_config.constraints.min_node_weight = 0
-      features = {}
-      features["dense_float"] = array_ops.ones([4, 1], dtypes.float32)
-
+      features = {"dense_float": array_ops.ones([4, 1], dtypes.float32)}
       gbdt_model = gbdt_batch.GradientBoostedDecisionTreeModel(
           is_chief=False,
           num_ps_replicas=0,
@@ -864,9 +847,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
       learner_config.regularization.l2 = 0
       learner_config.constraints.max_tree_depth = 1
       learner_config.constraints.min_node_weight = 0
-      features = {}
-      features["dense_float"] = array_ops.ones([4, 1], dtypes.float32)
-
+      features = {"dense_float": array_ops.ones([4, 1], dtypes.float32)}
       gbdt_model = gbdt_batch.GradientBoostedDecisionTreeModel(
           is_chief=False,
           num_ps_replicas=0,
@@ -950,8 +931,7 @@ class GbdtTest(test_util.TensorFlowTestCase):
       learner_config.regularization.l2 = 0
       learner_config.constraints.max_tree_depth = 1
       learner_config.constraints.min_node_weight = 0
-      features = {}
-      features["dense_float"] = array_ops.ones([4, 1], dtypes.float32)
+      features = {"dense_float": array_ops.ones([4, 1], dtypes.float32)}
       gbdt_model = gbdt_batch.GradientBoostedDecisionTreeModel(
           is_chief=False,
           num_ps_replicas=0,
@@ -1053,9 +1033,10 @@ class GbdtTest(test_util.TensorFlowTestCase):
       learner_config.regularization.l2 = 0
       learner_config.constraints.max_tree_depth = 1
       learner_config.constraints.min_node_weight = 0
-      features = {}
-      features["dense_float"] = array_ops.constant(
-          [[0.0], [1.0], [1.1], [2.0]], dtype=dtypes.float32)
+      features = {
+          "dense_float":
+          array_ops.constant([[0.0], [1.0], [1.1], [2.0]], dtype=dtypes.float32)
+      }
       gbdt_model = gbdt_batch.GradientBoostedDecisionTreeModel(
           is_chief=False,
           num_ps_replicas=0,

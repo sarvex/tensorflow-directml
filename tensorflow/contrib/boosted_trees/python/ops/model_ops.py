@@ -58,9 +58,9 @@ class TreeEnsembleVariableSavable(saver.BaseSaverBuilder.SaveableObject):
     slice_spec = ""
     specs = [
         saver.BaseSaverBuilder.SaveSpec(stamp_token, slice_spec,
-                                        name + "_stamp"),
+                                        f"{name}_stamp"),
         saver.BaseSaverBuilder.SaveSpec(ensemble_config, slice_spec,
-                                        name + "_config"),
+                                        f"{name}_config"),
     ]
     super(TreeEnsembleVariableSavable, self).__init__(tree_ensemble_handle,
                                                       specs, name)
@@ -115,11 +115,12 @@ class TreeEnsembleVariable(tracking.TrackableResource):
 
   def _gather_saveables_for_checkpoint(self):
     return {
-        self.resource_handle.op.name + "/tree_ensemble_variable":
-            functools.partial(
-                TreeEnsembleVariableSavable,
-                tree_ensemble_handle=self.resource_handle,
-                create_op=self.initializer)
+        f"{self.resource_handle.op.name}/tree_ensemble_variable":
+        functools.partial(
+            TreeEnsembleVariableSavable,
+            tree_ensemble_handle=self.resource_handle,
+            create_op=self.initializer,
+        )
     }
 
 

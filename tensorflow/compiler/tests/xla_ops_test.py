@@ -105,8 +105,7 @@ class XlaOpsNumericalTest(xla_test.XLATestCase, parameterized.TestCase):
 
   @parameterized.parameters(*PRECISION_VALUES)
   def testConv(self, precision):
-    for dtype in set(self.float_types).intersection(
-        set([dtypes.bfloat16.as_numpy_dtype, np.float32])):
+    for dtype in set(self.float_types).intersection({dtypes.bfloat16.as_numpy_dtype, np.float32}):
 
       def conv_1d_fn(lhs, rhs):
         dnums = xla_data_pb2.ConvolutionDimensionNumbers()
@@ -208,8 +207,7 @@ class XlaOpsNumericalTest(xla_test.XLATestCase, parameterized.TestCase):
               dtype=dtype))
 
   def testReduce(self):
-    for dtype in set(self.numeric_types).intersection(
-        set([dtypes.bfloat16.as_numpy_dtype, np.float32])):
+    for dtype in set(self.numeric_types).intersection({dtypes.bfloat16.as_numpy_dtype, np.float32}):
 
       @function.Defun(dtype, dtype)
       def sum_reducer(x, y):
@@ -258,8 +256,7 @@ class XlaOpsNumericalTest(xla_test.XLATestCase, parameterized.TestCase):
           expected=np.array([0, 45, 120, 231], dtype=dtype))
 
   def testSelectAndScatter(self):
-    for dtype in set(self.numeric_types).intersection(
-        set([dtypes.bfloat16.as_numpy_dtype, np.float32])):
+    for dtype in set(self.numeric_types).intersection({dtypes.bfloat16.as_numpy_dtype, np.float32}):
 
       @function.Defun(dtype, dtype)
       def add_scatter(x, y):

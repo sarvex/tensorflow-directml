@@ -162,12 +162,12 @@ def _gpu_backend_factory():
         'XLA_PYTHON_CLIENT_ALLOCATOR env var must be "default", "platform", or '
         '"bfc", got "%s"' % allocator)
   config = _xla.AllocatorConfig()
-  if allocator == 'default':
-    config.kind = _xla.AllocatorConfig.Kind.DEFAULT
-  if allocator == 'platform':
-    config.kind = _xla.AllocatorConfig.Kind.PLATFORM
   if allocator == 'bfc':
     config.kind = _xla.AllocatorConfig.Kind.BFC
+  elif allocator == 'default':
+    config.kind = _xla.AllocatorConfig.Kind.DEFAULT
+  elif allocator == 'platform':
+    config.kind = _xla.AllocatorConfig.Kind.PLATFORM
   if memory_fraction:
     config.memory_fraction = float(memory_fraction)
   config.preallocate = preallocate not in ('0', 'false', 'False')
@@ -228,7 +228,7 @@ def get_local_backend(name=None):
     try:
       return backends[name]
     except KeyError:
-      raise RuntimeError('Unknown backend {}'.format(name))
+      raise RuntimeError(f'Unknown backend {name}')
 
   return list(backends.values())[-1]
 
@@ -906,7 +906,7 @@ class ComputationBuilder(object):
     Returns:
       An XlaOp representing the added Pad op.
     """
-    if isinstance(padding_config, tuple) or isinstance(padding_config, list):
+    if isinstance(padding_config, (tuple, list)):
       padding_config = GetPaddingConfigFromTriples(padding_config)
     return ops.Pad(operand, padding_value, padding_config)
 
@@ -970,7 +970,7 @@ class ComputationBuilder(object):
       split_count = 1
     else:
       split_count = len(replica_groups[0])
-      if not all(split_count == len(g) for g in replica_groups):
+      if any(split_count != len(g) for g in replica_groups):
         raise ValueError('Replica groups must be equally sized')
     return ops.AllToAll(operand, split_dimension, concat_dimension, split_count,
                         replica_groups_protos)
@@ -1801,10 +1801,6 @@ def _make_replica_group_proto(replica_group):
 
 def _get_replica_groups_protos(replica_groups):
   if replica_groups is None:
-    replica_groups_protos = []  # special value for XLA API
-  else:
-    replica_groups = list(replica_groups)
-    replica_groups_protos = [
-        _make_replica_group_proto(group) for group in replica_groups
-    ]
-  return replica_groups_protos
+    return []
+  replica_groups = list(replica_groups)
+  return [_make_replica_group_proto(group) for group in replica_groups]

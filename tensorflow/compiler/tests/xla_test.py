@@ -68,12 +68,13 @@ def parse_disabled_manifest(manifest_content):
       raise ValueError('Bad entry in manifest file.')
 
   disabled_regex = '|'.join(disabled_tests)
-  method_types_filter = {}
-  for method, types in disabled_method_types:
-    method_types_filter[method] = set([
-        dtypes.as_dtype(types_pb2.DataType.Value(name)).as_numpy_dtype
-        for name in types
-    ])
+  method_types_filter = {
+      method: {
+          dtypes.as_dtype(types_pb2.DataType.Value(name)).as_numpy_dtype
+          for name in types
+      }
+      for method, types in disabled_method_types
+  }
   return disabled_regex, method_types_filter
 
 
@@ -84,43 +85,45 @@ class XLATestCase(test.TestCase):
     super(XLATestCase, self).__init__(method_name)
     self.device = FLAGS.test_device
     self.has_custom_call = (self.device == 'XLA_CPU')
-    self._all_tf_types = set([
+    self._all_tf_types = {
         dtypes.as_dtype(types_pb2.DataType.Value(name))
         for name in FLAGS.types.split(',')
-    ])
-    self.int_tf_types = set([
-        dtype for dtype in self._all_tf_types if dtype.is_integer
-    ])
-    self._float_tf_types = set([
-        dtype for dtype in self._all_tf_types if dtype.is_floating
-    ])
-    self.complex_tf_types = set([
-        dtype for dtype in self._all_tf_types if dtype.is_complex
-    ])
+    }
+    self.int_tf_types = {dtype for dtype in self._all_tf_types if dtype.is_integer}
+    self._float_tf_types = {
+        dtype
+        for dtype in self._all_tf_types if dtype.is_floating
+    }
+    self.complex_tf_types = {
+        dtype
+        for dtype in self._all_tf_types if dtype.is_complex
+    }
     self._numeric_tf_types = set(
         self.int_tf_types | self._float_tf_types | self.complex_tf_types)
-    self.quantized_tf_types = set(
-        dtype for dtype in self._all_tf_types if dtype.is_quantized)
+    self.quantized_tf_types = {
+        dtype
+        for dtype in self._all_tf_types if dtype.is_quantized
+    }
 
     # Quantized types don't have a numpy equivalent, include them in
     # all_tf_types but not in all_types.
     # TODO(b/115960798): Parametrize tests on TF types instead of numpy types
     # and remove all_types.
-    self._all_types = set(dtype.as_numpy_dtype
-                          for dtype in self._all_tf_types
-                          if not dtype.is_quantized)
-    self._int_types = set([dtype.as_numpy_dtype for dtype in self.int_tf_types])
-    self.signed_int_types = set(dtype.as_numpy_dtype
-                                for dtype in self.int_tf_types
-                                if not dtype.is_unsigned)
-    self.unsigned_int_types = set(dtype.as_numpy_dtype
-                                  for dtype in self.int_tf_types
-                                  if dtype.is_unsigned)
-    self._float_types = set(
-        [dtype.as_numpy_dtype for dtype in self._float_tf_types])
-    self.complex_types = set([
-        dtype.as_numpy_dtype for dtype in self.complex_tf_types
-    ])
+    self._all_types = {
+        dtype.as_numpy_dtype
+        for dtype in self._all_tf_types if not dtype.is_quantized
+    }
+    self._int_types = {dtype.as_numpy_dtype for dtype in self.int_tf_types}
+    self.signed_int_types = {
+        dtype.as_numpy_dtype
+        for dtype in self.int_tf_types if not dtype.is_unsigned
+    }
+    self.unsigned_int_types = {
+        dtype.as_numpy_dtype
+        for dtype in self.int_tf_types if dtype.is_unsigned
+    }
+    self._float_types = {dtype.as_numpy_dtype for dtype in self._float_tf_types}
+    self.complex_types = {dtype.as_numpy_dtype for dtype in self.complex_tf_types}
     self._numeric_types = set(self._int_types | self._float_types
                               | self.complex_types)
 
@@ -147,49 +150,53 @@ class XLATestCase(test.TestCase):
 
   @property
   def all_tf_types(self):
-    name = '{}.{}'.format(type(self).__name__, self._testMethodName)
-    tf_types = set([dtypes.as_dtype(t)
-                    for t in self._method_types_filter.get(name, set())])
+    name = f'{type(self).__name__}.{self._testMethodName}'
+    tf_types = {
+        dtypes.as_dtype(t)
+        for t in self._method_types_filter.get(name, set())
+    }
     return self._all_tf_types - tf_types
 
   @property
   def float_types(self):
-    name = '{}.{}'.format(type(self).__name__, self._testMethodName)
+    name = f'{type(self).__name__}.{self._testMethodName}'
     return self._float_types - self._method_types_filter.get(name, set())
 
   @property
   def float_tf_types(self):
-    name = '{}.{}'.format(type(self).__name__, self._testMethodName)
+    name = f'{type(self).__name__}.{self._testMethodName}'
     return self._float_tf_types - self._method_types_filter.get(name, set())
 
   @property
   def int_types(self):
-    name = '{}.{}'.format(type(self).__name__, self._testMethodName)
+    name = f'{type(self).__name__}.{self._testMethodName}'
     return self._int_types - self._method_types_filter.get(name, set())
 
   @property
   def numeric_tf_types(self):
-    name = '{}.{}'.format(type(self).__name__, self._testMethodName)
-    tf_types = set([dtypes.as_dtype(t)
-                    for t in self._method_types_filter.get(name, set())])
+    name = f'{type(self).__name__}.{self._testMethodName}'
+    tf_types = {
+        dtypes.as_dtype(t)
+        for t in self._method_types_filter.get(name, set())
+    }
     return self._numeric_tf_types - tf_types
 
   @property
   def numeric_types(self):
-    name = '{}.{}'.format(type(self).__name__, self._testMethodName)
+    name = f'{type(self).__name__}.{self._testMethodName}'
     return self._numeric_types - self._method_types_filter.get(name, set())
 
   @property
   def all_types(self):
-    name = '{}.{}'.format(type(self).__name__, self._testMethodName)
+    name = f'{type(self).__name__}.{self._testMethodName}'
     return self._all_types - self._method_types_filter.get(name, set())
 
   def setUp(self):
     super(XLATestCase, self).setUp()
-    name = '{}.{}'.format(type(self).__name__, self._testMethodName)
+    name = f'{type(self).__name__}.{self._testMethodName}'
     if self.disabled_regex is not None and self.disabled_regex.match(name):
       logging.info('Disabled test case: %s', name)
-      self.skipTest('{} is disabled by manifest.'.format(name))
+      self.skipTest(f'{name} is disabled by manifest.')
       return
     logging.info('Start test case: %s', name)
 
@@ -240,7 +247,7 @@ class XLATestCase(test.TestCase):
     Yields:
       A scope to apply to the operators under test.
     """
-    with ops.device('device:{}:0'.format(self.device)):
+    with ops.device(f'device:{self.device}:0'):
       yield
 
 
@@ -283,13 +290,10 @@ def Benchmark(tf_bench,
       # transfer of the result(s).  Non-compiled identity ops ensure XLA
       # doesn't know we're dropping the results, otherwise it might compile
       # away the entire computation.
-      for fetch in fetches:
-        targets.append(array_ops.identity(fetch).op)
-
+      targets.extend(array_ops.identity(fetch).op for fetch in fetches)
     # TODO(b/132430685):  Should we allow soft placement here?
     config = config_pb2.ConfigProto(allow_soft_placement=True)
     with session.Session(config=config) as sess:
       sess.run(variables.global_variables_initializer())
       xla = 'xla_' if use_xla_jit else ''
-      tf_bench.run_op_benchmark(
-          sess, targets, name='%s_%s%s' % (name, xla, device))
+      tf_bench.run_op_benchmark(sess, targets, name=f'{name}_{xla}{device}')

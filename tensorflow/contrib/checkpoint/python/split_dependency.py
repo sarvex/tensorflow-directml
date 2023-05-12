@@ -72,15 +72,14 @@ class _SplitDependency(trackable.Trackable):
     """Push into the shared buffer, flushing it if necessary."""
     if self._name in self._restore_buffer:
       raise AssertionError(
-          ("Split dependency %s (%s) unsynchronized. Split dependencies must "
-           "be restored together.") % (self._name, self))
+          f"Split dependency {self._name} ({self}) unsynchronized. Split dependencies must be restored together."
+      )
     self._restore_buffer[self._name] = tensor
-    if len(self._restore_buffer) == self._num_components:
-      op = self._consume_restore_buffer_fn(self._restore_buffer)
-      self._restore_buffer.clear()
-      return op
-    else:
+    if len(self._restore_buffer) != self._num_components:
       return control_flow_ops.no_op()
+    op = self._consume_restore_buffer_fn(self._restore_buffer)
+    self._restore_buffer.clear()
+    return op
 
   def _gather_saveables_for_checkpoint(self):
     """Looks to Trackable like a regular variable."""
@@ -128,15 +127,16 @@ def split_dependency(component_names, component_dtypes,
   """
   save_buffer = {}
   restore_buffer = {}
-  split_dependencies = {}
-  for name, dtype in zip(component_names, component_dtypes):
-    split_dependencies[name] = _SplitDependency(
-        save_buffer=save_buffer,
-        restore_buffer=restore_buffer,
-        name=name,
-        dtype=dtype,
-        device=device,
-        num_components=len(component_names),
-        fill_save_buffer_fn=fill_save_buffer_fn,
-        consume_restore_buffer_fn=consume_restore_buffer_fn)
-  return split_dependencies
+  return {
+      name: _SplitDependency(
+          save_buffer=save_buffer,
+          restore_buffer=restore_buffer,
+          name=name,
+          dtype=dtype,
+          device=device,
+          num_components=len(component_names),
+          fill_save_buffer_fn=fill_save_buffer_fn,
+          consume_restore_buffer_fn=consume_restore_buffer_fn,
+      )
+      for name, dtype in zip(component_names, component_dtypes)
+  }

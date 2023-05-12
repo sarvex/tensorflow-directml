@@ -48,8 +48,12 @@ class XlaSortOpTest(xla_test.XLATestCase):
         self.assertAllClose(v, result, rtol=1e-3)
 
   def testSort(self):
-    supported_types = set(
-        [dtypes.bfloat16.as_numpy_dtype, np.float32, np.int32, np.uint32])
+    supported_types = {
+        dtypes.bfloat16.as_numpy_dtype,
+        np.float32,
+        np.int32,
+        np.uint32,
+    }
     for dtype in supported_types.intersection(self.numeric_types):
       x = np.arange(101, dtype=dtype)
       np.random.shuffle(x)
@@ -57,11 +61,20 @@ class XlaSortOpTest(xla_test.XLATestCase):
           xla.sort, [x], expected=[np.arange(101, dtype=dtype)])
 
   def testKeyValueSort(self):
-    supported_key_types = set(
-        [dtypes.bfloat16.as_numpy_dtype, np.float32, np.int32, np.uint32])
-    supported_value_types = set(
-        [dtypes.bfloat16.as_numpy_dtype, np.float32, np.int32, np.uint32,
-         dtypes.int64.as_numpy_dtype, dtypes.uint64.as_numpy_dtype])
+    supported_key_types = {
+        dtypes.bfloat16.as_numpy_dtype,
+        np.float32,
+        np.int32,
+        np.uint32,
+    }
+    supported_value_types = {
+        dtypes.bfloat16.as_numpy_dtype,
+        np.float32,
+        np.int32,
+        np.uint32,
+        dtypes.int64.as_numpy_dtype,
+        dtypes.uint64.as_numpy_dtype,
+    }
     for key_type in supported_key_types.intersection(self.numeric_types):
       for value_type in supported_value_types.intersection(self.numeric_types):
         x = np.arange(101, dtype=key_type)
@@ -75,8 +88,12 @@ class XlaSortOpTest(xla_test.XLATestCase):
             ])
 
   def testTopK(self):
-    supported_types = set(
-        [dtypes.bfloat16.as_numpy_dtype, np.float32, np.int32, np.uint32])
+    supported_types = {
+        dtypes.bfloat16.as_numpy_dtype,
+        np.float32,
+        np.int32,
+        np.uint32,
+    }
     for dtype in supported_types.intersection(self.numeric_types):
       # Use small input size for bfloat16. Otherwise, we'll get duplicate values
       # after conversion to bfloat16, so the possible resulting index array is
@@ -100,8 +117,12 @@ class XlaSortOpTest(xla_test.XLATestCase):
               expected=[x[indices].astype(dtype), indices])
 
   def testTopK2D(self):
-    supported_types = set(
-        [dtypes.bfloat16.as_numpy_dtype, np.float32, np.int32, np.uint32])
+    supported_types = {
+        dtypes.bfloat16.as_numpy_dtype,
+        np.float32,
+        np.int32,
+        np.uint32,
+    }
     for dtype in supported_types.intersection(self.numeric_types):
       # Use small input size for bfloat16. Otherwise, we'll get duplicate values
       # after conversion to bfloat16, so the possible resulting index array is
@@ -143,7 +164,7 @@ class XlaSortOpTest(xla_test.XLATestCase):
           {p: np.array([0., -0., 0., 3., -0., -4., 0., -0.], dtype=bfloat16)})
       self.assertAllEqual(
           np.array([3., 0., 0., 0.], dtype=bfloat16), results[0])
-      self.assertEqual(list([3, 0, 2, 6]), list(results[1]))
+      self.assertEqual([3, 0, 2, 6], list(results[1]))
 
   def testTopKInfinities(self):
     """Tests that positive and negative infinity sort correctly."""
@@ -164,10 +185,10 @@ class XlaSortOpTest(xla_test.XLATestCase):
           np.array(
               [float("inf"), 2.0, 1.0, -1.0, -2.0, -float("inf")],
               dtype=bfloat16), results[0])
-      self.assertEqual(list([2, 1, 0, 4, 5, 3]), list(results[1]))
+      self.assertEqual([2, 1, 0, 4, 5, 3], list(results[1]))
 
   def testInTopK(self):
-    supported_types = set([np.int32, np.int64])
+    supported_types = {np.int32, np.int64}
     for dtype in supported_types.intersection(self.numeric_types):
       array_size = 200 * 1000
       k_options = [0, 1, 2, 10, 20, 100, 1000, 200 * 1000]

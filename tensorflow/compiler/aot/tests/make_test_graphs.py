@@ -174,7 +174,7 @@ def write_graph(build_graph, out_dir):
   g = ops.Graph()
   with g.as_default():
     build_graph(out_dir)
-    filename = os.path.join(out_dir, 'test_graph_%s.pb' % build_graph.__name__)
+    filename = os.path.join(out_dir, f'test_graph_{build_graph.__name__}.pb')
     with open(filename, 'wb') as f:
       f.write(g.as_graph_def().SerializeToString())
 

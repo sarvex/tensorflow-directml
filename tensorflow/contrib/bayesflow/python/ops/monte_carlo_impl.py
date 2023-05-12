@@ -180,13 +180,7 @@ def _logspace_mean(log_values):
   # centered_values = exp{Log[values] - E[Log[values]]}
   centered_values = math_ops.exp(log_values - center)
 
-  # log_mean_of_values = Log[ E[centered_values] ] + center
-  #                    = Log[ E[exp{log_values - E[log_values]}] ] + center
-  #                    = Log[E[values]] - E[log_values] + center
-  #                    = Log[E[values]]
-  log_mean_of_values = math_ops.log(_sample_mean(centered_values)) + center
-
-  return log_mean_of_values
+  return math_ops.log(_sample_mean(centered_values)) + center
 
 
 @deprecation.deprecated(
@@ -329,26 +323,25 @@ def expectation(f, samples, log_prob=None, use_reparametrization=True,
       raise ValueError('`f` must be a callable function.')
     if use_reparametrization:
       return math_ops.reduce_mean(f(samples), axis=axis, keepdims=keep_dims)
-    else:
-      if not callable(log_prob):
-        raise ValueError('`log_prob` must be a callable function.')
-      stop = array_ops.stop_gradient  # For readability.
-      x = stop(samples)
-      logpx = log_prob(x)
-      fx = f(x)  # Call `f` once in case it has side-effects.
-      # We now rewrite f(x) so that:
-      #   `grad[f(x)] := grad[f(x)] + f(x) * grad[logqx]`.
-      # To achieve this, we use a trick that
-      #   `h(x) - stop(h(x)) == zeros_like(h(x))`
-      # but its gradient is grad[h(x)].
-      # Note that IEEE754 specifies that `x - x == 0.` and `x + 0. == x`, hence
-      # this trick loses no precision. For more discussion regarding the
-      # relevant portions of the IEEE754 standard, see the StackOverflow
-      # question,
-      # "Is there a floating point value of x, for which x-x == 0 is false?"
-      # http://stackoverflow.com/q/2686644
-      fx += stop(fx) * (logpx - stop(logpx))  # Add zeros_like(logpx).
-      return math_ops.reduce_mean(fx, axis=axis, keepdims=keep_dims)
+    if not callable(log_prob):
+      raise ValueError('`log_prob` must be a callable function.')
+    stop = array_ops.stop_gradient  # For readability.
+    x = stop(samples)
+    logpx = log_prob(x)
+    fx = f(x)  # Call `f` once in case it has side-effects.
+    # We now rewrite f(x) so that:
+    #   `grad[f(x)] := grad[f(x)] + f(x) * grad[logqx]`.
+    # To achieve this, we use a trick that
+    #   `h(x) - stop(h(x)) == zeros_like(h(x))`
+    # but its gradient is grad[h(x)].
+    # Note that IEEE754 specifies that `x - x == 0.` and `x + 0. == x`, hence
+    # this trick loses no precision. For more discussion regarding the
+    # relevant portions of the IEEE754 standard, see the StackOverflow
+    # question,
+    # "Is there a floating point value of x, for which x-x == 0 is false?"
+    # http://stackoverflow.com/q/2686644
+    fx += stop(fx) * (logpx - stop(logpx))  # Add zeros_like(logpx).
+    return math_ops.reduce_mean(fx, axis=axis, keepdims=keep_dims)
 
 
 def _sample_mean(values):

@@ -58,8 +58,7 @@ def simple_functional_model():
   b = keras.layers.Dense(16, activation='relu')(a)
   b = keras.layers.Dropout(0.1)(b)
   b = keras.layers.Dense(_NUM_CLASS, activation='softmax')(b)
-  model = keras.models.Model(inputs=[a], outputs=[b])
-  return model
+  return keras.models.Model(inputs=[a], outputs=[b])
 
 
 def multi_inputs_multi_outputs_model():
@@ -174,8 +173,7 @@ def batch_wrapper(dataset, batch_size, distribution, repeat=None):
 def get_model():
   x = keras.layers.Input(shape=(3,), name='input')
   y = keras.layers.Dense(4, name='dense')(x)
-  model = keras.Model(x, y)
-  return model
+  return keras.Model(x, y)
 
 
 def get_dataset(distribution):
@@ -205,8 +203,7 @@ def multi_input_output_model():
   c = dense_1(a)
   d = dense_2(b)
   e = keras.layers.Dropout(0.5, name='dropout')(c)
-  model = keras.models.Model([a, b], [d, e])
-  return model
+  return keras.models.Model([a, b], [d, e])
 
 
 def get_correctness_test_inputs(use_numpy, use_validation_data,
